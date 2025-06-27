@@ -6,18 +6,14 @@ import {
   Image,
   TouchableOpacity,
   Animated,
+  TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 
 type BarItem = {
   color: string;
   label: string;
   width: number;
-  fontSize?: number;
-  marginRight?: number;
-  marginTop?: number;
-  align?: 'flex-start' | 'center' | 'flex-end';
-  labelPosition?: { top: number; left: number };
-  xOffset?: number;
 };
 
 type Props = {
@@ -39,13 +35,16 @@ const VerticalTicksRow = () => {
 };
 
 const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) => {
+  const screenWidth = Dimensions.get('window').width;
   const [animatedAmount, setAnimatedAmount] = useState('₹0');
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
   const barWidths = useRef(bars.map(() => new Animated.Value(0))).current;
+  const barScales = useRef(bars.map(() => new Animated.Value(1))).current;
+  const barShifts = useRef(bars.map(() => new Animated.Value(0))).current;
+  const labelScales = useRef(bars.map(() => new Animated.Value(1))).current;
   const [labelsVisible, setLabelsVisible] = useState(false);
 
-  // animate balance
   useEffect(() => {
     const timer = setTimeout(() => {
       const finalValue = parseInt(balanceAmount.replace(/[^\d]/g, ''), 10);
@@ -57,21 +56,23 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) =
       const interval = setInterval(() => {
         const progress = currentFrame / totalFrames;
         const currentValue = Math.floor(progress * finalValue);
-        setAnimatedAmount(`₹${currentValue.toLocaleString()}`); // ✅ fixed quotes
+        setAnimatedAmount(`₹${currentValue.toLocaleString()}`);
         currentFrame++;
 
         if (currentFrame >= totalFrames) {
           clearInterval(interval);
           setAnimatedAmount(`₹${finalValue.toLocaleString()}`);
           Animated.sequence([
-            Animated.timing(scaleAnim, {
+            Animated.spring(scaleAnim, {
               toValue: 1.1,
-              duration: 150,
+              friction: 3,
+              tension: 120,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleAnim, {
+            Animated.spring(scaleAnim, {
               toValue: 1,
-              duration: 150,
+              friction: 4,
+              tension: 100,
               useNativeDriver: true,
             }),
           ]).start();
@@ -82,7 +83,6 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) =
     return () => clearTimeout(timer);
   }, [balanceAmount]);
 
-  // animate bars
   useEffect(() => {
     const animations = bars.map((bar, index) =>
       Animated.timing(barWidths[index], {
@@ -91,120 +91,178 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) =
         useNativeDriver: false,
       })
     );
-
     Animated.stagger(200, animations).start(() => {
       setLabelsVisible(true);
     });
   }, []);
 
+  const resetBars = () => {
+    setSelectedIndex(null);
+    bars.forEach((_, i) => {
+      Animated.parallel([
+        Animated.spring(barScales[i], {
+          toValue: 1,
+          friction: 6,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(labelScales[i], {
+          toValue: 1,
+          friction: 6,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(barShifts[i], {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
+
+  const handleBarTap = (index: number) => {
+    if (selectedIndex === index) {
+      resetBars();
+      return;
+    }
+
+    resetBars();
+
+    setTimeout(() => {
+      setSelectedIndex(index);
+      bars.forEach((_, i) => {
+        const spacing = 30;
+        const offset = i === index ? 0 : i < index ? -spacing : spacing;
+
+        Animated.parallel([
+          Animated.spring(barScales[i], {
+            toValue: i === index ? 1.4 : 0.9,
+            friction: 6,
+            tension: 120,
+            useNativeDriver: true,
+          }),
+          Animated.spring(labelScales[i], {
+            toValue: i === index ? 1.2 : 0.9,
+            friction: 6,
+            tension: 90,
+            useNativeDriver: true,
+          }),
+          Animated.timing(barShifts[i], {
+            toValue: offset,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    }, 50);
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <View style={styles.walletIcons}>
-          {[...Array(3)].map((_, i) => (
-            <Image
-              key={i}
-              source={require('../assets/icon.png')}
-              style={styles.walletIcon}
-            />
-          ))}
-        </View>
-        <Text style={styles.walletAddress}>{walletAddress}</Text>
-        <TouchableOpacity style={styles.profileBtn}>
-          <Text style={styles.profileInitial}>{userName[0]}</Text>
-        </TouchableOpacity>
-        <Text style={styles.profileName}>{userName}</Text>
-      </View>
-
-      <View style={{ height: 50 }} />
-
-      <View style={styles.balanceSection}>
-        <Text
-          style={[
-            styles.label,
-            {
-              color: '#FFFFFF',
-              fontSize: 14,
-              fontWeight: '600',
-              marginLeft: 10,
-              opacity: 0.6,
-            },
-          ]}
-        >
-          Total Spent
-        </Text>
-
-        <Animated.Text
-          style={[
-            styles.amount,
-            {
-              transform: [{ scale: scaleAnim }],
-              alignSelf: 'flex-end',
-              marginRight: 230,
-              fontSize: 32,
-              marginBottom: 10,
-            },
-          ]}
-        >
-          {animatedAmount}
-        </Animated.Text>
-
-        <View style={styles.barsWrapper}>
-          {bars.map((bar, index) => (
-            <View
-              key={index}
-              style={[
-                styles.barBox,
-                {
-                  marginRight: bar.marginRight || 0,
-                  marginTop: bar.marginTop || 0,
-                  alignItems: bar.align || 'center',
-                  position: 'relative',
-                },
-              ]}
-            >
-              <Animated.View
-                style={[
-                  styles.coloredBox,
-                  {
-                    backgroundColor: bar.color,
-                    width: barWidths[index],
-                  },
-                ]}
+    <TouchableWithoutFeedback onPress={resetBars}>
+      <View style={styles.container}>
+        {/* Top Header */}
+        <View style={styles.topBar}>
+          <View style={styles.walletIcons}>
+            {[...Array(3)].map((_, i) => (
+              <Image
+                key={i}
+                source={require('../assets/icon.png')}
+                style={styles.walletIcon}
               />
-              {labelsVisible && (
-                <Text
+            ))}
+          </View>
+          <Text style={styles.walletAddress}>{walletAddress}</Text>
+          <TouchableOpacity style={styles.profileBtn}>
+            <Text style={styles.profileInitial}>{userName[0]}</Text>
+          </TouchableOpacity>
+          <Text style={styles.profileName}>{userName}</Text>
+        </View>
+
+        {/* Balance */}
+        <View style={{ height: 50 }} />
+        <View style={styles.balanceSection}>
+          <Text style={[styles.label, { opacity: 0.6, marginLeft: 10 }]}>Total Spent</Text>
+          <Animated.Text
+            style={[
+              styles.amount,
+              { transform: [{ scale: scaleAnim }], marginRight: 230 },
+            ]}
+          >
+            {animatedAmount}
+          </Animated.Text>
+
+          {/* Bars */}
+          <View style={[styles.barsWrapper]}>
+            {bars.map((bar, index) => (
+              <TouchableOpacity key={index} onPress={() => handleBarTap(index)} activeOpacity={0.9}>
+                <Animated.View
                   style={[
-                    styles.barLabel,
-                    { fontSize: bar.fontSize || 10 },
-                    bar.labelPosition
-                      ? {
-                          position: 'absolute',
-                          top: bar.labelPosition.top,
-                          left: bar.labelPosition.left,
-                        }
-                      : {},
+                    styles.barBox,
+                    {
+                      transform: [
+                        { scale: barScales[index] },
+                        { translateX: barShifts[index] },
+                      ],
+                    },
                   ]}
                 >
-                  {bar.label}
-                </Text>
-              )}
-            </View>
-          ))}
-        </View>
+                  <Animated.View
+                    style={[
+                      styles.coloredBox,
+                      {
+                        backgroundColor: bar.color,
+                        width: barWidths[index],
+                      },
+                    ]}
+                  />
+                  {labelsVisible && (
+                    <Animated.View
+                      style={{ transform: [{ scale: labelScales[index] }] }}
+                    >
+                      <Text style={styles.barLabel}>{bar.label}</Text>
+                      {selectedIndex === index && (
+                        <Text style={styles.usageText}>12% usage</Text>
+                      )}
+                    </Animated.View>
+                  )}
+                </Animated.View>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-        <VerticalTicksRow />
+          <VerticalTicksRow />
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#111', padding: 20 },
-  topBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  walletIcons: { flexDirection: 'row' },
-  walletIcon: { width: 24, height: 24, marginRight: -8 },
-  walletAddress: { color: '#aaa', marginLeft: 10, marginRight: 'auto' },
+  container: {
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  walletIcons: {
+    flexDirection: 'row',
+  },
+  walletIcon: {
+    width: 24,
+    height: 24,
+    marginRight: -8,
+  },
+  walletAddress: {
+    color: '#aaa',
+    marginLeft: 10,
+    marginRight: 'auto',
+  },
   profileBtn: {
     backgroundColor: '#f33',
     width: 30,
@@ -213,10 +271,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileInitial: { color: '#fff', fontWeight: 'bold' },
-  profileName: { color: '#fff', marginLeft: 8 },
-  balanceSection: { marginTop: 10 },
-  label: { color: '#888', fontSize: 12 },
+  profileInitial: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  profileName: {
+    color: '#fff',
+    marginLeft: 8,
+  },
+  balanceSection: {
+    marginTop: 10,
+  },
+  label: {
+    color: '#888',
+    fontSize: 12,
+  },
   amount: {
     fontSize: 30,
     color: '#fff',
@@ -226,13 +295,13 @@ const styles = StyleSheet.create({
   },
   barsWrapper: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     marginTop: 16,
-    flexWrap: 'wrap',
   },
   barBox: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginHorizontal: 4,
   },
   coloredBox: {
     height: 28,
@@ -241,6 +310,14 @@ const styles = StyleSheet.create({
   barLabel: {
     color: '#aaa',
     marginTop: 4,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  usageText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
   },
   ticksContainer: {
     flexDirection: 'row',
