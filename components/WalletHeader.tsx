@@ -96,6 +96,14 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) =
     });
   }, []);
 
+  const getBarOffsetToCenter = (index: number) => {
+    const barWidth = bars[index].width;
+    const totalBarWidth = barWidth + 8; // bar + marginHorizontal
+    const screenCenter = screenWidth / 2;
+    const barX = totalBarWidth * index + totalBarWidth / 2;
+    return screenCenter - barX;
+  };
+
   const resetBars = () => {
     setSelectedIndex(null);
     bars.forEach((_, i) => {
@@ -131,9 +139,15 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) =
 
     setTimeout(() => {
       setSelectedIndex(index);
+      const centerOffset = getBarOffsetToCenter(index);
       bars.forEach((_, i) => {
-        const spacing = 30;
-        const offset = i === index ? 0 : i < index ? -spacing : spacing;
+        let offset = 0;
+        if (i === index) {
+          offset = centerOffset;
+        } else {
+          const spacing = 30;
+          offset = i < index ? -spacing : spacing;
+        }
 
         Animated.parallel([
           Animated.spring(barScales[i], {
