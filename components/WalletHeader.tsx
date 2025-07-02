@@ -5,15 +5,33 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  Animated,
+  ScrollView,
+  Alert,
   TouchableWithoutFeedback,
-  Dimensions,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolate,
+  withTiming,
+  withDelay,
+} from 'react-native-reanimated';
 
-type BarItem = {
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
+
+export type BarItem = {
   color: string;
   label: string;
   width: number;
+  fontSize?: number;
+  marginRight?: number;
+  marginTop?: number;
+  align?: 'flex-start' | 'center' | 'flex-end';
+  usage?: number;
+  shiftX?: number;
 };
 
 type Props = {
@@ -21,329 +39,389 @@ type Props = {
   userName: string;
   balanceAmount: string;
   bars: BarItem[];
+  profileIcons?: string[];
 };
 
 const VerticalTicksRow = () => {
-  const tickCount = 40;
   return (
     <View style={styles.ticksContainer}>
-      {Array.from({ length: tickCount }).map((_, index) => (
-        <View key={index} style={styles.tick} />
+      {Array.from({ length: 40 }).map((_, i) => (
+        <View key={i} style={styles.tick} />
       ))}
     </View>
   );
 };
 
-const WalletHeader = ({ walletAddress, userName, balanceAmount, bars }: Props) => {
-  const screenWidth = Dimensions.get('window').width;
+const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIcons }: Props) => {
+  const animationProgress = useSharedValue(0);
+  const scrollX = useSharedValue(0);
+  const interactionStarted = useSharedValue(false);
+
   const [animatedAmount, setAnimatedAmount] = useState('₹0');
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const barWidths = useRef(bars.map(() => new Animated.Value(0))).current;
-  const barScales = useRef(bars.map(() => new Animated.Value(1))).current;
-  const barShifts = useRef(bars.map(() => new Animated.Value(0))).current;
-  const labelScales = useRef(bars.map(() => new Animated.Value(1))).current;
   const [labelsVisible, setLabelsVisible] = useState(false);
+  const [visibleBars, setVisibleBars] = useState<BarItem[]>(bars);
+  const [uploadedImages, setUploadedImages] = useState<(string | null)[]>(
+    Array(3).fill(null).map((_, i) => profileIcons?.[i] ?? null)
+  );
+  const [scrollEnabled, setScrollEnabled] = useState(false);
+  const [showBars, setShowBars] = useState(false);
+  const slideStarted = useRef(false);
+
+  const iconOffsets = useRef([0, 1, 2].map(() => useSharedValue(50))).current;
+  const iconOpacities = useRef([0, 1, 2].map(() => useSharedValue(0))).current;
+
+  const barWidths = useRef(bars.map(() => useSharedValue(0))).current;
+  const barMargins = useRef(bars.map(() => useSharedValue(10))).current;
+
+  const triggerSlideToPosition = () => {
+    if (slideStarted.current) return;
+    slideStarted.current = true;
+  
+    setScrollEnabled(true); // 🔓 Tap ke turant baad scroll allow
+  
+    bars.forEach((bar, idx) => {
+      barWidths[idx].value = withTiming(bar.width, { duration: 800 });
+      const originalMargin = (bar as any)._originalMargin ?? 10;
+      barMargins[idx].value = withTiming(originalMargin, { duration: 800 });
+    });
+  
+    animationProgress.value = withTiming(1, { duration: 600 });
+  };
+  
+
+  //   setTimeout(() => {
+  //     animationProgress.value = withTiming(1, { duration: 600 });
+  //     setScrollEnabled(true);
+  //   }, slideDuration + extraDelay);
+  // };
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+    animationProgress.value = withTiming(1, { duration: 600 });
+  });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const finalValue = parseInt(balanceAmount.replace(/[^\d]/g, ''), 10);
-      const duration = 3000;
-      const frameRate = 60;
-      const totalFrames = Math.round((duration / 1000) * frameRate);
-      let currentFrame = 0;
+    uploadedImages.forEach((uri, i) => {
+      const delay = i * 500;
+      iconOffsets[i].value = withDelay(delay, withTiming(0, { duration: 600 }));
+      iconOpacities[i].value = withDelay(delay, withTiming(1, { duration: 600 }));
+    });
 
-      const interval = setInterval(() => {
-        const progress = currentFrame / totalFrames;
-        const currentValue = Math.floor(progress * finalValue);
-        setAnimatedAmount(`₹${currentValue.toLocaleString()}`);
-        currentFrame++;
+    setTimeout(() => setShowBars(true), 3 * 500 + 500);
+  }, [uploadedImages]);
 
-        if (currentFrame >= totalFrames) {
-          clearInterval(interval);
-          setAnimatedAmount(`₹${finalValue.toLocaleString()}`);
-          Animated.sequence([
-            Animated.spring(scaleAnim, {
-              toValue: 1.1,
-              friction: 3,
-              tension: 120,
-              useNativeDriver: true,
-            }),
-            Animated.spring(scaleAnim, {
-              toValue: 1,
-              friction: 4,
-              tension: 100,
-              useNativeDriver: true,
-            }),
-          ]).start();
-        }
-      }, 1000 / frameRate);
-    }, 200);
+  useEffect(() => {
+    const finalValue = parseInt(balanceAmount.replace(/[^\d]/g, ''), 10);
+    const duration = 3000;
+    const frameRate = 60;
+    const totalFrames = Math.round((duration / 1000) * frameRate);
+    let currentFrame = 0;
 
-    return () => clearTimeout(timer);
+    const interval = setInterval(() => {
+      const progress = currentFrame / totalFrames;
+      const currentValue = Math.floor(progress * finalValue);
+      setAnimatedAmount(`₹${currentValue.toLocaleString()}`);
+      currentFrame++;
+      if (currentFrame >= totalFrames) {
+        clearInterval(interval);
+        setAnimatedAmount(`₹${finalValue.toLocaleString()}`);
+      }
+    }, 1000 / frameRate);
+
+    return () => clearInterval(interval);
   }, [balanceAmount]);
 
   useEffect(() => {
-    const animations = bars.map((bar, index) =>
-      Animated.timing(barWidths[index], {
-        toValue: bar.width,
-        duration: 800,
-        useNativeDriver: false,
-      })
-    );
-    Animated.stagger(200, animations).start(() => {
-      setLabelsVisible(true);
+    bars.forEach((bar, idx) => {
+      const originalWidth = bar.width;
+      const originalMargin = bar.marginRight ?? 10;
+
+      let distortedWidth = originalWidth;
+      let distortedMargin = originalMargin;
+
+      if (idx === 0) { distortedWidth = 110; distortedMargin = 7; }
+      else if (idx === 1) { distortedWidth = 90; distortedMargin = 6; }
+      else if (idx === 2) { distortedWidth = 70; distortedMargin = 7; }
+      else if (idx === 3) { distortedWidth = 50; distortedMargin = 20; }
+
+      barWidths[idx].value = withDelay(idx * 200, withTiming(distortedWidth, { duration: 800 }));
+      barMargins[idx].value = withDelay(idx * 200, withTiming(distortedMargin, { duration: 800 }));
+
+      (bars[idx] as any)._originalMargin = originalMargin;
     });
+
+    setTimeout(() => setLabelsVisible(true), bars.length * 200 + 800);
   }, []);
 
-  const getBarOffsetToCenter = (index: number) => {
-    const barWidth = bars[index].width;
-    const totalBarWidth = barWidth + 8; // bar + marginHorizontal
-    const screenCenter = screenWidth / 2;
-    const barX = totalBarWidth * index + totalBarWidth / 2;
-    return screenCenter - barX;
-  };
+  const pickImage = async (index: number) => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload images!');
+        return;
+      }
 
-  const resetBars = () => {
-    setSelectedIndex(null);
-    bars.forEach((_, i) => {
-      Animated.parallel([
-        Animated.spring(barScales[i], {
-          toValue: 1,
-          friction: 6,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.spring(labelScales[i], {
-          toValue: 1,
-          friction: 6,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(barShifts[i], {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  };
-
-  const handleBarTap = (index: number) => {
-    if (selectedIndex === index) {
-      resetBars();
-      return;
-    }
-
-    resetBars();
-
-    setTimeout(() => {
-      setSelectedIndex(index);
-      const centerOffset = getBarOffsetToCenter(index);
-      bars.forEach((_, i) => {
-        let offset = 0;
-        if (i === index) {
-          offset = centerOffset;
-        } else {
-          const spacing = 30;
-          offset = i < index ? -spacing : spacing;
-        }
-
-        Animated.parallel([
-          Animated.spring(barScales[i], {
-            toValue: i === index ? 1.4 : 0.9,
-            friction: 6,
-            tension: 120,
-            useNativeDriver: true,
-          }),
-          Animated.spring(labelScales[i], {
-            toValue: i === index ? 1.2 : 0.9,
-            friction: 6,
-            tension: 90,
-            useNativeDriver: true,
-          }),
-          Animated.timing(barShifts[i], {
-            toValue: offset,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]).start();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
       });
-    }, 50);
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const newImages = [...uploadedImages];
+        newImages[index] = result.assets[0].uri;
+        setUploadedImages(newImages);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...uploadedImages];
+    newImages[index] = null;
+    setUploadedImages(newImages);
+  };
+
+  const handleIconPress = (index: number) => {
+    if (uploadedImages[index]) {
+      Alert.alert('Image Options', 'What would you like to do?', [
+        { text: 'Change Image', onPress: () => pickImage(index) },
+        { text: 'Remove Image', onPress: () => removeImage(index), style: 'destructive' },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      pickImage(index);
+    }
   };
 
   return (
-    <TouchableWithoutFeedback onPress={resetBars}>
-      <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.topBar}>
-          <View style={styles.walletIcons}>
-            {[...Array(3)].map((_, i) => (
-              <Image
-                key={i}
-                source={require('../assets/icon.png')}
-                style={styles.walletIcon}
-              />
-            ))}
-          </View>
-          <Text style={styles.walletAddress}>{walletAddress}</Text>
-          <TouchableOpacity style={styles.profileBtn}>
-            <Text style={styles.profileInitial}>{userName[0]}</Text>
-          </TouchableOpacity>
-          <Text style={styles.profileName}>{userName}</Text>
+    <View style={styles.container}>
+      {/* Top Profile Row */}
+      <View style={styles.topBar}>
+        <View style={styles.walletIcons}>
+          {uploadedImages.map((_, i) => {
+            const animatedStyle = useAnimatedStyle(() => ({
+              transform: [{ translateX: iconOffsets[i].value }],
+              opacity: iconOpacities[i].value,
+            }));
+
+            return (
+              <Animated.View key={i} style={[animatedStyle, styles.iconContainer]}>
+                <TouchableOpacity onPress={() => handleIconPress(i)}>
+                  <Image
+                    source={uploadedImages[i] ? { uri: uploadedImages[i]! } : require('../assets/icon.png')}
+                    style={styles.walletIcon}
+                  />
+                  {!uploadedImages[i] && (
+                    <View style={styles.uploadOverlay}>
+                      <Text style={styles.uploadText}>+</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
         </View>
 
-        {/* Balance */}
-        <View style={{ height: 50 }} />
-        <View style={styles.balanceSection}>
-          <Text style={[styles.label, { opacity: 0.6, marginLeft: 10 }]}>Total Spent</Text>
-          <Animated.Text
-            style={[
-              styles.amount,
-              { transform: [{ scale: scaleAnim }], marginRight: 230 },
-            ]}
-          >
-            {animatedAmount}
-          </Animated.Text>
+        <Text style={styles.walletAddress}>{walletAddress}</Text>
+        <TouchableOpacity style={styles.profileBtn}>
+          <Text style={styles.profileInitial}>{userName[0]}</Text>
+        </TouchableOpacity>
+        <Text style={styles.profileName}>{userName}</Text>
+      </View>
 
-          {/* Bars */}
-          <View style={[styles.barsWrapper]}>
-            {bars.map((bar, index) => (
-              <TouchableOpacity key={index} onPress={() => handleBarTap(index)} activeOpacity={0.9}>
-                <Animated.View
-                  style={[
-                    styles.barBox,
-                    {
-                      transform: [
-                        { scale: barScales[index] },
-                        { translateX: barShifts[index] },
-                      ],
-                    },
-                  ]}
-                >
-                  <Animated.View
-                    style={[
-                      styles.coloredBox,
-                      {
-                        backgroundColor: bar.color,
-                        width: barWidths[index],
-                      },
-                    ]}
-                  />
-                  {labelsVisible && (
-                    <Animated.View
-                      style={{ transform: [{ scale: labelScales[index] }] }}
-                    >
-                      <Text style={styles.barLabel}>{bar.label}</Text>
-                      {selectedIndex === index && (
-                        <Text style={styles.usageText}>12% usage</Text>
-                      )}
-                    </Animated.View>
-                  )}
-                </Animated.View>
-              </TouchableOpacity>
-            ))}
+      <View style={{ height: 50 }} />
+
+      {/* Total Spent + Bars */}
+      <View style={styles.balanceSection}>
+        <Text style={styles.label}>Total Spent</Text>
+        <Text style={styles.amount}>{animatedAmount}</Text>
+
+        <View style={styles.chartWrapper}>
+          <TouchableWithoutFeedback onPress={triggerSlideToPosition}>
+            <View>
+              <AnimatedScrollView
+                horizontal
+                scrollEnabled={scrollEnabled}
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onScroll={scrollHandler}
+                style={styles.scrollView}
+              >
+                <View style={styles.barsWrapper}>
+                  {visibleBars.map((bar, visibleIdx) => {
+                    const originalIdx = bars.findIndex(b => b.label === bar.label);
+
+                    const shiftXStyle = useAnimatedStyle(() => ({
+                      transform: [{ translateX: [0, 1, 2, 3].includes(originalIdx) ? -9 : 0 }],
+                    }));
+
+                    const scaleStyle = useAnimatedStyle(() => {
+                      const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
+                      const center = scrollX.value + 180;
+                      const dist = Math.abs(center - mid);
+                      const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
+                      const s = 1 + (rawScale - 1) * animationProgress.value;
+                      return { transform: [{ scale: s }] };
+                    });
+
+                    const labelScaleStyle = useAnimatedStyle(() => {
+                      const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
+                      const center = scrollX.value + 180;
+                      const dist = Math.abs(center - mid);
+                      const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
+                      const s = 1 + (rawScale - 1) * animationProgress.value;
+                      return { transform: [{ scale: s }] };
+                    });
+
+                    const shadowStyle = useAnimatedStyle(() => {
+                      const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
+                      const center = scrollX.value + 180;
+                      const dist = Math.abs(center - mid);
+                      const opacity = interactionStarted.value
+                        ? interpolate(dist, [0, 60, 150], [1, 0, 0], Extrapolate.CLAMP)
+                        : 0;
+                      return {
+                        shadowColor: '#33FF99',
+                        shadowOpacity: opacity * 0.4,
+                        shadowRadius: opacity * 10,
+                        elevation: opacity * 8,
+                      };
+                    });
+
+                    const widthStyle = useAnimatedStyle(() => ({
+                      width: barWidths[originalIdx].value,
+                    }));
+
+                    const marginRightStyle = useAnimatedStyle(() => ({
+                      marginRight: barMargins[originalIdx].value,
+                    }));
+
+                    return (
+                      <Animated.View
+                        key={bar.label}
+                        style={[styles.barBox, marginRightStyle, shiftXStyle, { marginTop: bar.marginTop ?? 0 }]}
+                      >
+                        {bar.usage != null && (
+                          <Animated.View style={[styles.usageTextBox, useAnimatedStyle(() => {
+                            const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
+                            const center = scrollX.value + 180;
+                            const dist = Math.abs(center - mid);
+                            const show = interactionStarted.value
+                              ? interpolate(dist, [0, 40, 80], [1, 0, 0], Extrapolate.CLAMP)
+                              : 0;
+                            return { opacity: show };
+                          })]}>
+                            <Text style={styles.usageText}>{bar.usage}% USAGE</Text>
+                          </Animated.View>
+                        )}
+
+                        <Animated.View style={[styles.barShadowWrapperBase, scaleStyle, shadowStyle]}>
+                          <Animated.View style={[styles.coloredBox, { backgroundColor: bar.color }, widthStyle]} />
+                        </Animated.View>
+
+                        {labelsVisible && (
+                          <Animated.Text style={[
+                            styles.barLabel,
+                            { fontSize: bar.fontSize || 12 },
+                            { transform: [{ translateX: bar.shiftX ?? 0 }] },
+                            labelScaleStyle
+                          ]}>
+                            {bar.label}
+                          </Animated.Text>
+                        )}
+                      </Animated.View>
+                    );
+                  })}
+                </View>
+              </AnimatedScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+
+          <View style={styles.ticksWrapper}>
+            <VerticalTicksRow />
           </View>
-
-          <VerticalTicksRow />
         </View>
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    backgroundColor: '#0D0D0D',
+    padding: 20,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
-  walletIcons: {
-    flexDirection: 'row',
-  },
-  walletIcon: {
-    width: 24,
-    height: 24,
-    marginRight: -8,
-  },
-  walletAddress: {
-    color: '#aaa',
-    marginLeft: 10,
-    marginRight: 'auto',
-  },
-  profileBtn: {
-    backgroundColor: '#f33',
-    width: 30,
-    height: 30,
+  walletIcons: { flexDirection: 'row' },
+  walletIcon: { width: 24, height: 24, marginRight: -8, borderRadius: 12 },
+  iconContainer: { position: 'relative' },
+  uploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileInitial: {
-    color: '#fff',
-    fontWeight: 'bold',
+  uploadText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+  walletAddress: { color: '#aaa', marginLeft: 10, marginRight: 'auto' },
+  profileBtn: {
+    backgroundColor: '#f33',
+    width: 30, height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  profileName: {
-    color: '#fff',
-    marginLeft: 8,
-  },
-  balanceSection: {
-    marginTop: 10,
-  },
-  label: {
-    color: '#888',
-    fontSize: 12,
-  },
+  profileInitial: { color: '#fff', fontWeight: 'bold' },
+  profileName: { color: '#fff', marginLeft: 8 },
+  balanceSection: { marginTop: 10 },
+  label: { color: '#FFF', fontSize: 14, fontWeight: '600', marginLeft: 10, opacity: 0.6 },
   amount: {
-    fontSize: 30,
+    fontSize: 32,
     color: '#fff',
     fontWeight: 'bold',
-    letterSpacing: 0.5,
-    marginVertical: 8,
+    marginBottom: 10,
+    alignSelf: 'flex-end',
+    marginRight: 230,
   },
+  chartWrapper: { position: 'relative', paddingBottom: 30, overflow: 'visible' },
+  scrollView: { marginTop: 16, overflow: 'visible' },
   barsWrapper: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: 16,
+    alignItems: 'flex-end',
+    flexWrap: 'nowrap',
+    paddingHorizontal: 10,
+    overflow: 'visible',
   },
-  barBox: {
+  barBox: { position: 'relative', alignItems: 'center', marginBottom: 8, minHeight: 140, overflow: 'visible' },
+  barShadowWrapperBase: { backgroundColor: '#111', borderRadius: 8, height: 28, justifyContent: 'center' },
+  coloredBox: { height: 28, borderRadius: 8 },
+  barLabel: { color: '#aaa', marginTop: 42, textAlign: 'center' },
+  usageTextBox: {
+    position: 'absolute',
+    top: -30,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  coloredBox: {
-    height: 28,
-    borderRadius: 8,
-  },
-  barLabel: {
-    color: '#aaa',
-    marginTop: 4,
-    fontSize: 12,
-    textAlign: 'center',
+    zIndex: 9999,
   },
   usageText: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
+    fontSize: 12,
+    color: '#FFF',
+    backgroundColor: '#000',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  ticksContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  tick: {
-    width: 1,
-    height: 10,
-    backgroundColor: '#333',
-  },
+  ticksWrapper: { position: 'absolute', bottom: 120, left: 0, right: 0 },
+  ticksContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
+  tick: { width: 1, height: 10, backgroundColor: '#333' },
 });
 
 export default WalletHeader;

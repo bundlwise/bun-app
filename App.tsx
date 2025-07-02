@@ -1,44 +1,68 @@
+// App.tsx
 import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import WalletHeader from './components/WalletHeader';
+import WalletHeader, { BarItem } from './components/WalletHeader'; // ✅ path ok
 
-export default function App() {
-  const bars = [
+const bars: BarItem[] = [
   {
     color: '#33C48D',
     label: 'Netflix',
-    width: 120,
-    fontSize: 12,
-    marginRight: 10, // space between boxes
-    labelPosition: { top: 62, left: 10 },
+    width: 100,
+    usage: 12,
+    marginRight: 20,
+    shiftX: -40,   // moves “Netflix” 40px to the left
   },
   {
     color: '#6464FF',
     label: 'Prime',
     width: 100,
-    fontSize: 12,
-    marginRight: 10,
-    labelPosition: { top: 62, left: 10 },
+    usage: 8,
+    marginRight: 20,
+    shiftX: -30,   // tweak as needed
   },
   {
     color: '#D965C7',
     label: 'Hotstar',
-    width: 70,
-    fontSize: 12,
-    labelPosition: { top: 62, left: 10 }, // last one: no marginRight
+    width: 100,
+    usage: 16,
+    marginRight: 20,
+    shiftX: -20,
   },
-
+  {
+    color: '#33FF57',
+    label: 'YouTube',
+    width: 100,
+    usage: 20,
+    marginRight: 20,
+    shiftX: -10,
+  },
+  {
+    color: '#33FFF6',
+    label: 'Spotify',
+    width: 100,
+    usage: 10,
+    marginRight: 20,
+    shiftX: 0,
+  },
+  {
+    color: '#33FF99',
+    label: 'HealthyFy',
+    width: 100,
+    usage: 9,
+    marginRight: 20,
+    shiftX: 10,    // moves “HealthyFy” 10px to the right
+  },
 ];
 
-  
+export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <WalletHeader
-        walletAddress="Subscribed Apps"
-        userName="Om Sawant"
+        walletAddress="Subscribed-Apps"
+        userName="Om"
         balanceAmount="₹7000"
-        bars={bars} // 👉 xOffset is passed for custom X-position
+        bars={bars}
       />
     </SafeAreaView>
   );
@@ -47,7 +71,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
   },
 });
-
