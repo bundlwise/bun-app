@@ -1,68 +1,174 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 const MyAssetsCard = () => {
   return (
     <LinearGradient
       colors={['#F749A2', '#C147E9']}
+      style={styles.outerCard}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.cardContainer}
     >
-      <View style={styles.leftContent}>
-        <Text style={styles.largeAmount}>1,743,287.20</Text>
-        <Text style={styles.smallAmount}>00.0196287</Text>
+      {/* 🔹 Header */}
+      <View style={styles.headerRow}>
+        <Text style={styles.headerText}>Upcoming Payments</Text>
       </View>
 
-      <View style={styles.assetInfo}>
-        <Image source={require('../assets/icon.png')} style={styles.assetIcon} />
-        <Text style={styles.assetName}>Tether</Text>
+      {/* 🔹 Main Rectangle */}
+      <View style={styles.rectangleBox}>
+        <Image
+          source={{ uri: 'https://your-backend.com/icon.png' }}
+          style={styles.rectangleImage}
+        />
+        <Text style={styles.rectangleText}>Rs 1200</Text>
       </View>
 
-      <Text style={styles.assetValue}>1,287.05</Text>
+      {/* 🔹 First Overlap Rectangle */}
+      <BlurView intensity={30} tint="light" style={styles.overlapBox}>
+        <Image
+          source={{ uri: 'https://your-backend.com/overlap-icon.png' }}
+          style={styles.overlapImage}
+        />
+        <Text style={styles.overlapText}>Rs 600</Text>
+      </BlurView>
+
+      {/* 🔹 Second Overlap Rectangle */}
+      <BlurView intensity={40} tint="light" style={styles.overlapBox2}>
+        <Image
+          source={{ uri: 'https://your-backend.com/third-icon.png' }}
+          style={styles.overlapImage2}
+        />
+        <Text style={styles.overlapText2}>Rs 300</Text>
+      </BlurView>
+
+      {/* 🔹 Spacer */}
+      <View style={styles.spacer} />
     </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    margin: 20,
-    borderRadius: 20,
-    padding: 20,
+  outerCard: {
+    borderRadius: 24,
+    padding: 18,
+    marginVertical: 20,
+    height: 200,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+
+  headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  leftContent: {
-    flex: 1,
-  },
-  largeAmount: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  smallAmount: {
-    color: '#fff',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  assetInfo: {
     alignItems: 'center',
   },
-  assetIcon: {
-    width: 24,
-    height: 24,
-    marginBottom: 4,
+
+  headerText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.9,
   },
-  assetName: {
+
+  rectangleBox: {
+    backgroundColor: 'rgba(255,176,234,0.35)',
+    borderRadius: 16,
+    height: 160,
+    width: 290,
+    top: 50,
+    right: 32,
+    position: 'absolute',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+
+  rectangleText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+    position: 'absolute',
+    top: 11,
+    left: 175,
+  },
+
+  rectangleImage: {
+    width: 22,
+    height: 22,
+    position: 'absolute',
+    top: 6,
+    left: 16,
+    borderRadius: 10,
+    backgroundColor: '#fff2',
+  },
+
+  /** 🔸 First Overlapping Box */
+  overlapBox: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    height: 160,
+    width: 310,
+    position: 'absolute',
+    top: 80,
+    right: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  overlapText: {
     color: '#fff',
     fontSize: 12,
+    fontWeight: '600',
+    position: 'absolute',
+    top: 11,
+    left: 183,
   },
-  assetValue: {
+
+  overlapImage: {
+    width: 22,
+    height: 22,
+    position: 'absolute',
+    top: 6,
+    left: 19,
+    borderRadius: 10,
+    backgroundColor: '#fff2',
+  },
+
+  /** 🔸 Second Overlapping Box */
+  overlapBox2: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    height: 160,
+    width: 330,
+    position: 'absolute',
+    top: 110,
+    right: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  overlapText2: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    position: 'absolute',
+    top: 11,
+    left: 185,
+  },
+
+  overlapImage2: {
+    width: 22,
+    height: 22,
+    position: 'absolute',
+    top: 6,
+    left: 23,
+    borderRadius: 10,
+    backgroundColor: '#fff2',
+  },
+
+  spacer: {
+    height: 8,
   },
 });
 

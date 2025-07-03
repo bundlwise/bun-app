@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import MyAssetsCard from '../components/MyAssetsCard';
+
 import {
   View,
   Text,
@@ -42,15 +44,13 @@ type Props = {
   profileIcons?: string[];
 };
 
-const VerticalTicksRow = () => {
-  return (
-    <View style={styles.ticksContainer}>
-      {Array.from({ length: 40 }).map((_, i) => (
-        <View key={i} style={styles.tick} />
-      ))}
-    </View>
-  );
-};
+const VerticalTicksRow = () => (
+  <View style={styles.ticksContainer}>
+    {Array.from({ length: 40 }).map((_, i) => (
+      <View key={i} style={styles.tick} />
+    ))}
+  </View>
+);
 
 const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIcons }: Props) => {
   const animationProgress = useSharedValue(0);
@@ -65,35 +65,27 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
   );
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [showBars, setShowBars] = useState(false);
-  const slideStarted = useRef(false);
 
+  const slideStarted = useRef(false);
   const iconOffsets = useRef([0, 1, 2].map(() => useSharedValue(50))).current;
   const iconOpacities = useRef([0, 1, 2].map(() => useSharedValue(0))).current;
-
   const barWidths = useRef(bars.map(() => useSharedValue(0))).current;
   const barMargins = useRef(bars.map(() => useSharedValue(10))).current;
 
   const triggerSlideToPosition = () => {
     if (slideStarted.current) return;
     slideStarted.current = true;
-  
-    setScrollEnabled(true); // 🔓 Tap ke turant baad scroll allow
-  
+
+    setScrollEnabled(true);
+
     bars.forEach((bar, idx) => {
       barWidths[idx].value = withTiming(bar.width, { duration: 800 });
       const originalMargin = (bar as any)._originalMargin ?? 10;
       barMargins[idx].value = withTiming(originalMargin, { duration: 800 });
     });
-  
+
     animationProgress.value = withTiming(1, { duration: 600 });
   };
-  
-
-  //   setTimeout(() => {
-  //     animationProgress.value = withTiming(1, { duration: 600 });
-  //     setScrollEnabled(true);
-  //   }, slideDuration + extraDelay);
-  // };
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
@@ -101,7 +93,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
   });
 
   useEffect(() => {
-    uploadedImages.forEach((uri, i) => {
+    uploadedImages.forEach((_, i) => {
       const delay = i * 500;
       iconOffsets[i].value = withDelay(delay, withTiming(0, { duration: 600 }));
       iconOpacities[i].value = withDelay(delay, withTiming(1, { duration: 600 }));
@@ -146,7 +138,6 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
 
       barWidths[idx].value = withDelay(idx * 200, withTiming(distortedWidth, { duration: 800 }));
       barMargins[idx].value = withDelay(idx * 200, withTiming(distortedMargin, { duration: 800 }));
-
       (bars[idx] as any)._originalMargin = originalMargin;
     });
 
@@ -168,7 +159,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets && result.assets[0]) {
+      if (!result.canceled && result.assets?.[0]) {
         const newImages = [...uploadedImages];
         newImages[index] = result.assets[0].uri;
         setUploadedImages(newImages);
@@ -198,7 +189,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
 
   return (
     <View style={styles.container}>
-      {/* Top Profile Row */}
+      {/* 🔹 Profile Header */}
       <View style={styles.topBar}>
         <View style={styles.walletIcons}>
           {uploadedImages.map((_, i) => {
@@ -234,7 +225,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
 
       <View style={{ height: 50 }} />
 
-      {/* Total Spent + Bars */}
+      {/* 🔹 Balance & Bars */}
       <View style={styles.balanceSection}>
         <Text style={styles.label}>Total Spent</Text>
         <Text style={styles.amount}>{animatedAmount}</Text>
@@ -267,15 +258,6 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
                       return { transform: [{ scale: s }] };
                     });
 
-                    const labelScaleStyle = useAnimatedStyle(() => {
-                      const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
-                      const center = scrollX.value + 180;
-                      const dist = Math.abs(center - mid);
-                      const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
-                      const s = 1 + (rawScale - 1) * animationProgress.value;
-                      return { transform: [{ scale: s }] };
-                    });
-
                     const shadowStyle = useAnimatedStyle(() => {
                       const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
                       const center = scrollX.value + 180;
@@ -289,6 +271,15 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
                         shadowRadius: opacity * 10,
                         elevation: opacity * 8,
                       };
+                    });
+
+                    const labelScaleStyle = useAnimatedStyle(() => {
+                      const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
+                      const center = scrollX.value + 180;
+                      const dist = Math.abs(center - mid);
+                      const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
+                      const s = 1 + (rawScale - 1) * animationProgress.value;
+                      return { transform: [{ scale: s }] };
                     });
 
                     const widthStyle = useAnimatedStyle(() => ({
@@ -344,8 +335,11 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
             <VerticalTicksRow />
           </View>
         </View>
+        <MyAssetsCard />
       </View>
+      
     </View>
+    
   );
 };
 
