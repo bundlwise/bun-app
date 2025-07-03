@@ -26,22 +26,26 @@ const MyAssetsCard = () => {
       </View>
 
       {/* 🔹 First Overlap Rectangle */}
-      <BlurView intensity={30} tint="light" style={styles.overlapBox}>
-        <Image
-          source={{ uri: 'https://your-backend.com/overlap-icon.png' }}
-          style={styles.overlapImage}
-        />
-        <Text style={styles.overlapText}>Rs 600</Text>
-      </BlurView>
+      <View style={styles.blurWrapper}>
+        <BlurView intensity={30} tint="light" style={styles.overlapBox}>
+          <Image
+            source={{ uri: 'https://your-backend.com/overlap-icon.png' }}
+            style={styles.overlapImage}
+          />
+          <Text style={styles.overlapText}>Rs 600</Text>
+        </BlurView>
+      </View>
 
       {/* 🔹 Second Overlap Rectangle */}
-      <BlurView intensity={40} tint="light" style={styles.overlapBox2}>
-        <Image
-          source={{ uri: 'https://your-backend.com/third-icon.png' }}
-          style={styles.overlapImage2}
-        />
-        <Text style={styles.overlapText2}>Rs 300</Text>
-      </BlurView>
+      <View style={styles.blurWrapper2}>
+        <BlurView intensity={40} tint="light" style={styles.overlapBox2}>
+          <Image
+            source={{ uri: 'https://your-backend.com/third-icon.png' }}
+            style={styles.overlapImage2}
+          />
+          <Text style={styles.overlapText2}>Rs 300</Text>
+        </BlurView>
+      </View>
 
       {/* 🔹 Spacer */}
       <View style={styles.spacer} />
@@ -82,6 +86,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     paddingHorizontal: 16,
+    overflow: 'hidden',
   },
 
   rectangleText: {
@@ -103,17 +108,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff2',
   },
 
-  /** 🔸 First Overlapping Box */
-  overlapBox: {
-    backgroundColor: 'transparent',
-    borderRadius: 16,
-    height: 160,
-    width: 310,
+  /** 🔸 BlurView Wrappers */
+  blurWrapper: {
     position: 'absolute',
     top: 80,
     right: 22,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  blurWrapper2: {
+    position: 'absolute',
+    top: 110,
+    right: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+
+  /** 🔸 First Overlapping Box */
+  overlapBox: {
+    height: 160,
+    width: 310,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 16,
   },
 
   overlapText: {
@@ -137,15 +155,11 @@ const styles = StyleSheet.create({
 
   /** 🔸 Second Overlapping Box */
   overlapBox2: {
-    backgroundColor: 'transparent',
-    borderRadius: 16,
     height: 160,
     width: 330,
-    position: 'absolute',
-    top: 110,
-    right: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 16,
   },
 
   overlapText2: {
