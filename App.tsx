@@ -1,7 +1,8 @@
 // App.tsx
 import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import WalletHeader, { BarItem } from './components/WalletHeader'; // ✅ path ok
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import WalletHeader, { BarItem } from './components/WalletHeader';
 
 const bars: BarItem[] = [
   {
@@ -10,7 +11,7 @@ const bars: BarItem[] = [
     width: 100,
     usage: 12,
     marginRight: 20,
-    shiftX: -40,   // moves “Netflix” 40px to the left
+    shiftX: -40,
   },
   {
     color: '#6464FF',
@@ -18,7 +19,7 @@ const bars: BarItem[] = [
     width: 100,
     usage: 8,
     marginRight: 20,
-    shiftX: -30,   // tweak as needed
+    shiftX: -30,
   },
   {
     color: '#D965C7',
@@ -50,21 +51,23 @@ const bars: BarItem[] = [
     width: 100,
     usage: 9,
     marginRight: 20,
-    shiftX: 10,    // moves “HealthyFy” 10px to the right
+    shiftX: 10,
   },
 ];
 
 export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <WalletHeader
-        walletAddress="Subscribed-Apps"
-        userName="Om"
-        balanceAmount="₹7000"
-        bars={bars}
-      />
-    </SafeAreaView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <WalletHeader
+          walletAddress="Subscribed-Apps"
+          userName="Om"
+          balanceAmount="₹7000"
+          bars={bars}
+        />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 

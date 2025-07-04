@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MyAssetsCard from '../components/MyAssetsCard';
+import TransactionList from '../components/TransactionList';
+
 
 import {
   View,
@@ -335,7 +337,14 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
             <VerticalTicksRow />
           </View>
         </View>
-        <MyAssetsCard />
+        <View style={{ marginTop: -90 }}>
+          <MyAssetsCard />
+          </View>
+          <View style={{ marginTop: -10 }}>
+          <TransactionList />
+          </View>
+          
+
       </View>
       
     </View>
