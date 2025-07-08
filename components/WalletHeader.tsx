@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MyAssetsCard from '../components/MyAssetsCard';
 import TransactionList from '../components/TransactionList';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+
 
 
 import {
@@ -55,9 +59,11 @@ const VerticalTicksRow = () => (
 );
 
 const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIcons }: Props) => {
+  const navigation = useNavigation<any>();
   const animationProgress = useSharedValue(0);
   const scrollX = useSharedValue(0);
   const interactionStarted = useSharedValue(false);
+  
 
   const [animatedAmount, setAnimatedAmount] = useState('₹0');
   const [labelsVisible, setLabelsVisible] = useState(false);
@@ -219,9 +225,13 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
         </View>
 
         <Text style={styles.walletAddress}>{walletAddress}</Text>
-        <TouchableOpacity style={styles.profileBtn}>
+        <TouchableOpacity
+        style={styles.profileBtn}
+        onPress={() => navigation.navigate('Profile')}
+        >
           <Text style={styles.profileInitial}>{userName[0]}</Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
+
         <Text style={styles.profileName}>{userName}</Text>
       </View>
 
@@ -338,11 +348,20 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
           </View>
         </View>
         <View style={{ marginTop: -90 }}>
-          <MyAssetsCard />
-          </View>
-          <View style={{ marginTop: -10 }}>
-          <TransactionList />
-          </View>
+            <MyAssetsCard />
+        </View>
+        <TouchableOpacity
+      onPress={() => navigation.navigate('PaymentHistory')}
+      style={{ marginTop: -3, marginLeft: 250, alignItems: 'center' }}
+    >
+      <Text style={{ color: '#aaa', fontSize: 13, fontWeight: '500' }}>
+        See More
+      </Text>
+    </TouchableOpacity>
+        <View style={{ marginTop: -12}}>
+            <TransactionList />
+        </View>
+
           
 
       </View>
@@ -361,6 +380,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    // marginTop: 30,
   },
   walletIcons: { flexDirection: 'row' },
   walletIcon: { width: 24, height: 24, marginRight: -8, borderRadius: 12 },

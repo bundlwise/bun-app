@@ -25,7 +25,7 @@ const MyAssetsCard = () => {
     fontSize: new Animated.Value(positions[0].fontSize),
     translateX: new Animated.Value(0),
     opacity: new Animated.Value(1),
-  }))).current;
+  })));
 
   const panResponder = useRef(
     PanResponder.create({
@@ -47,9 +47,9 @@ const MyAssetsCard = () => {
 
     const toX = direction === 'left' ? -400 : 400;
 
-    const frontAnim = animatedValues[front];
-    const middleAnim = animatedValues[middle];
-    const backAnim = animatedValues[back];
+    const frontAnim = animatedValues.current[front];
+    const middleAnim = animatedValues.current[middle];
+    const backAnim = animatedValues.current[back];
 
     // Front card slides out
     Animated.timing(frontAnim.translateX, {
@@ -65,6 +65,12 @@ const MyAssetsCard = () => {
         if (removed) updated.unshift(removed);
         return updated;
       });
+
+      const updatedAnims = [...animatedValues.current];
+      const removedAnim = updatedAnims.pop();
+      if (removedAnim) updatedAnims.unshift(removedAnim);
+      animatedValues.current = updatedAnims;
+
       setIsAnimating(false);
     });
 
@@ -131,7 +137,9 @@ const MyAssetsCard = () => {
   useEffect(() => {
     cards.forEach((_, i) => {
       const pos = positions[i];
-      const anim = animatedValues[i];
+      const anim = animatedValues.current[i];
+
+      if (!anim) return;
 
       Animated.parallel([
         Animated.timing(anim.top, {
@@ -176,7 +184,9 @@ const MyAssetsCard = () => {
       </View>
 
       {cards.map((item, index) => {
-        const anim = animatedValues[index];
+        const anim = animatedValues.current[index];
+        if (!anim) return null;
+        
         return (
           <Animated.View
             key={item.key}
