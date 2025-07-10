@@ -14,7 +14,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  Alert,  
   TouchableWithoutFeedback,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -47,7 +47,8 @@ type Props = {
   userName: string;
   balanceAmount: string;
   bars: BarItem[];
-  profileIcons?: string[];
+  profileIcons?: (string | null)[];
+
 };
 
 const VerticalTicksRow = () => (
@@ -112,7 +113,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
 
   useEffect(() => {
     const finalValue = parseInt(balanceAmount.replace(/[^\d]/g, ''), 10);
-    const duration = 3000;
+    const duration = 800;
     const frameRate = 60;
     const totalFrames = Math.round((duration / 1000) * frameRate);
     let currentFrame = 0;
@@ -209,10 +210,17 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
             return (
               <Animated.View key={i} style={[animatedStyle, styles.iconContainer]}>
                 <TouchableOpacity onPress={() => handleIconPress(i)}>
-                  <Image
-                    source={uploadedImages[i] ? { uri: uploadedImages[i]! } : require('../assets/icon.png')}
-                    style={styles.walletIcon}
-                  />
+                <Image
+  source={
+    uploadedImages[i]
+      ? typeof uploadedImages[i] === 'string'
+        ? { uri: uploadedImages[i] }
+        : uploadedImages[i]
+      : require('../assets/icon.png')
+  }
+  style={styles.walletIcon}
+/>
+
                   {!uploadedImages[i] && (
                     <View style={styles.uploadOverlay}>
                       <Text style={styles.uploadText}>+</Text>

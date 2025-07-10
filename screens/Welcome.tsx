@@ -217,10 +217,10 @@ const styles = StyleSheet.create({
   },
   gradientButton: {
     width: 400,
-    height:150,
+    height:100,
     alignSelf: 'center',
     marginTop: -100,
-    borderRadius: 12,
+    borderRadius: 0,
     paddingVertical: 10,
     overflow: 'hidden',
   },
@@ -235,6 +235,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    paddingTop:3.5,
   },
   arrowIcon: {
     width: 22,
