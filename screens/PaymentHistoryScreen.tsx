@@ -1,90 +1,167 @@
-// components/TransactionHistory.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Image,
-  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const transactions = [
-  {
-    title: 'CSS.GG',
-    subtitle:
-      'Open-source CSS, SVG and Figma UI Icons Available in SVG Sprite, styled-components, NPM & API',
-    amount: '₹2,281',
-    avatarUri: 'https://avatars.githubusercontent.com/u/1857554?v=4',
-    user: 'astrit',
-    downloads: '2,281',
-  },
-  {
-    title: 'Tailwind Icons',
-    subtitle:
-      'Icons made for Tailwind + Figma + React using SVG, CSS, and more',
-    amount: '₹3,499',
-    avatarUri: 'https://avatars.githubusercontent.com/u/123456?v=4',
-    user: 'rahul',
-    downloads: '5,612',
-  },
-  {
-    title: 'Feather Icons',
-    subtitle:
-      'Simply beautiful open-source icons, always up-to-date for developers',
-    amount: '₹1,999',
-    avatarUri: 'https://avatars.githubusercontent.com/u/7891011?v=4',
-    user: 'jack',
-    downloads: '3,014',
-  },
-];
+// 🔹 Card Component
+const CardItem = ({ title, subtitle, avatar, downloads, amount, icon }: any) => {
+  const imageSource = typeof icon === 'string' ? { uri: icon } : icon;
+  
+  const navigation = useNavigation();
 
-const TransactionHistory = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {transactions.map((item, index) => (
-          <View key={index} style={styles.card}>
-            {/* Top Row */}
-            <View style={styles.topRow}>
-              <View style={styles.iconTitleContainer}>
-                <View style={styles.titleSubtitle}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text numberOfLines={2} style={styles.subtitle}>
-                    {item.subtitle}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.amount}>
-                <Text style={styles.amountText}>{item.amount}</Text>
-              </View>
-            </View>
-
-            {/* Bottom Row */}
-            <View style={styles.bottomRow}>
-              <View style={styles.metaLeft}>
-                <Image source={{ uri: item.avatarUri }} style={styles.avatar} />
-                <Text style={styles.metaText}>{item.user}</Text>
-              </View>
-              <View style={styles.metaRight}>
-                <Feather name="download" color="#aaa" size={14} />
-                <Text style={styles.metaText}>{item.downloads}</Text>
-              </View>
-            </View>
+    <View style={styles.card}>
+      <View style={styles.topRow}>
+        <View style={styles.iconTitleContainer}>
+          <Image source={imageSource} style={styles.icon} />
+          <View style={styles.titleSubtitle}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+        <View style={styles.amount}>
+          <Text style={styles.amountText}>{amount}</Text>
+        </View>
+      </View>
+
+      <View style={styles.bottomRow}>
+        <View style={styles.metaLeft}>
+          <Image source={{ uri: avatar }} style={styles.avatar} />
+          <Text style={styles.metaText}>astrit</Text>
+        </View>
+        <View style={styles.metaRight}>
+          <Feather name="download" color="#aaa" size={14} />
+          <Text style={styles.metaText}>{downloads}</Text>
+        </View>
+      </View>
+    </View>
   );
 };
 
-export default TransactionHistory;
+// 🔹 Main Component
+const CSSCardList = () => {
+  const navigation = useNavigation();
+  const [cards, setCards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🧪 Dummy data fallback (temporary)
+  const dummyData = [
+    {
+      title: 'CSS.GG',
+      subtitle: 'Open-source CSS, SVG and Figma UI Icons Available in SVG Sprite, styled-components, NPM & API',
+      icon: require('../assets/Screenshot 2025-07-12 at 8.28.45 PM.png'),
+      avatar: 'https://avatars.githubusercontent.com/u/1857554?v=4',
+      downloads: '2,281',
+      amount: '₹2,281',
+    },
+    {
+      title: 'ChatGPT',
+      subtitle: 'Bringing the power of artificial intelligence to everyone — anytime, anywhere — to think, create, and solve',
+      icon: require('../assets/chatgpt.png'),
+      avatar: 'https://avatars.githubusercontent.com/u/23264?v=4',
+      downloads: '3,999',
+      amount: '₹1,299',
+    },
+    {
+      title: 'GitHub',
+      subtitle: 'The world’s leading platform for software development — where millions of developers collaborate, innovate',
+      icon: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+      avatar: 'https://avatars.githubusercontent.com/u/839962?v=4',
+      downloads: '5,232',
+      amount: '₹3,999',
+    },
+    {
+      title: 'Heroicons',
+      subtitle: 'Unlimited entertainment. One simple subscription. Watch stories unfold across the world, whenever and wherever you want',
+      icon: 'https://avatars.githubusercontent.com/u/23264?v=4',
+      avatar: 'https://avatars.githubusercontent.com/u/23264?v=4',
+      downloads: '1,800',
+      amount: '₹899',
+    },
+  ];
+
+  // 🛠️ Future API fetch logic placeholder
+  useEffect(() => {
+    // Simulate network delay (remove this once real API used)
+    setTimeout(() => {
+      setCards(dummyData); // 🔁 Replace this with real API response
+      setLoading(false);
+    }, 500); // adjust as needed
+  }, []);
+
+  return (
+    <LinearGradient
+      colors={['#292734', '#1E1B23', '#121118', '#000000']}
+      locations={[0, 0.5, 0.6, 1]}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.container}
+    >
+      {/* Sticky Header */}
+      <View style={styles.headerRow}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+  <Feather name="arrow-left" size={20} color="#fff" />
+</TouchableOpacity>
+
+        <Text style={styles.heading}>Payment History</Text>
+      </View>
+
+      {/* Scrollable Cards */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.cardsWrapper}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            cards.map((item, index) => (
+              <CardItem key={index} {...item} />
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </LinearGradient>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
+    backgroundColor: 'transparent',
+    zIndex: 10,
+  },
+  scrollContent: {
+    paddingBottom: 32,
+    paddingTop: 8,
+  },
+  backButton: {
+    marginRight: 10,
+    padding: 4,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    fontFamily: 'Inter_700Bold',
+    marginLeft: 60,
+  },
+  cardsWrapper: {
+    alignItems: 'center',
   },
   card: {
     width: 385,
@@ -108,6 +185,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
   },
+  icon: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    marginRight: 16,
+    top: -5,
+  },
   titleSubtitle: {
     flex: 1,
   },
@@ -115,14 +200,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+    marginBottom: 4,
     fontFamily: 'Inter_600SemiBold',
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 20,
     color: '#aaa',
-    height: 36,
-    overflow: 'hidden',
-    marginBottom: 16,
+    top: 18,
+    left: -40,
+    width: 330,
     fontFamily: 'Inter_400Regular',
   },
   amount: {
@@ -141,7 +228,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     fontWeight: '500',
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter_500Medium',
   },
   bottomRow: {
     flexDirection: 'row',
@@ -168,5 +255,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#aaa',
     marginLeft: 4,
+    fontFamily: 'Inter_400Regular',
   },
 });
+
+export default CSSCardList;
