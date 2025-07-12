@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,49 +17,6 @@ type Transaction = {
   address: string;
 };
 
-const transactions: Transaction[] = [
-  {
-    id: '1',
-    name: 'Apple-Music',
-    icon: 'https://cryptologos.cc/logos/appcoins-appc-logo.png',
-    subtitle: '12th June - 14th July',
-    amount: '450.098',
-    address: 'Auto-Payment',
-  },
-  {
-    id: '2',
-    name: 'Spotify',
-    icon: 'https://cryptologos.cc/logos/varenx-varen-logo.png',
-    subtitle: 'Upcoming',
-    amount: '22.00',
-    address: 'Amazon-Pay',
-  },
-  {
-    id: '3',
-    name: 'Om-Baba',
-    icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-    subtitle: 'Dev',
-    amount: 'Growth',
-    address: 'Intern',
-  },
-  {
-    id: '4',
-    name: 'Doremon',
-    icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-    subtitle: 'Cartoon',
-    amount: '1200.00',
-    address: 'Cartoon Network',
-  },
-  {
-    id: '5',
-    name: 'Vishwesh-Bhaiya',
-    icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-    subtitle: 'Student',
-    amount: '120000.00',
-    address: 'Eng',
-  },
-];
-
 const TransactionItem = ({ item }: { item: Transaction }) => {
   return (
     <View style={styles.row}>
@@ -77,6 +34,60 @@ const TransactionItem = ({ item }: { item: Transaction }) => {
 };
 
 const TransactionList = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    // 🔄 Replace this with real API later
+    const fetchTransactions = async () => {
+      const dataFromBackend: Transaction[] = [
+        {
+          id: '1',
+          name: 'Apple-Music',
+          icon: 'https://cryptologos.cc/logos/appcoins-appc-logo.png',
+          subtitle: '12th June - 14th July',
+          amount: '450.098',
+          address: 'Auto-Payment',
+        },
+        {
+          id: '2',
+          name: 'Spotify',
+          icon: 'https://cryptologos.cc/logos/varenx-varen-logo.png',
+          subtitle: 'Upcoming',
+          amount: '22.00',
+          address: 'Amazon-Pay',
+        },
+        {
+          id: '3',
+          name: 'Om-Baba',
+          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
+          subtitle: 'Dev',
+          amount: 'Growth',
+          address: 'Intern',
+        },
+        {
+          id: '4',
+          name: 'Raha',
+          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
+          subtitle: '19 jan - 16 may',
+          amount: '1300',
+          address: 'Intern',
+        },
+        {
+          id: '5',
+          name: 'Subscribe',
+          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
+          subtitle: '19 dec - 16 may',
+          amount: '1300',
+          address: 'rock',
+        }
+      ];
+      setTransactions(dataFromBackend.slice(0, 5));
+;
+    };
+
+    fetchTransactions();
+  }, []);
+
   const renderItem: ListRenderItem<Transaction> = ({ item }) => (
     <TransactionItem item={item} />
   );
@@ -98,7 +109,7 @@ const TransactionList = () => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    height: 300, // 👈 Set scrollable height here
+    height: 300,
     marginTop: 10,
     overflow: 'hidden',
   },

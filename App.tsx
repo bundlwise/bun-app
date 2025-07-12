@@ -1,79 +1,28 @@
 // App.tsx
-import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import WalletHeader, { BarItem } from './components/WalletHeader';
 
-const bars: BarItem[] = [
-  {
-    color: '#33C48D',
-    label: 'Netflix',
-    width: 100,
-    usage: 12,
-    marginRight: 20,
-    shiftX: -40,
-  },
-  {
-    color: '#6464FF',
-    label: 'Prime',
-    width: 100,
-    usage: 8,
-    marginRight: 20,
-    shiftX: -30,
-  },
-  {
-    color: '#D965C7',
-    label: 'Hotstar',
-    width: 100,
-    usage: 16,
-    marginRight: 20,
-    shiftX: -20,
-  },
-  {
-    color: '#33FF57',
-    label: 'YouTube',
-    width: 100,
-    usage: 20,
-    marginRight: 20,
-    shiftX: -10,
-  },
-  {
-    color: '#33FFF6',
-    label: 'Spotify',
-    width: 100,
-    usage: 10,
-    marginRight: 20,
-    shiftX: 0,
-  },
-  {
-    color: '#33FF99',
-    label: 'HealthyFy',
-    width: 100,
-    usage: 9,
-    marginRight: 20,
-    shiftX: 10,
-  },
-];
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Welcome from './screens/Welcome'; // 👈 Your Welcome screen
+import WalletScreen from './screens/WalletScreen'; // 👈 The Wallet UI screen
+import ProfileInfoScreen from './screens/Profile';
+import PaymentHistoryScreen from './screens/PaymentHistoryScreen';
+
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" />
-        <WalletHeader
-          walletAddress="Subscribed-Apps"
-          userName="Om"
-          balanceAmount="₹7000"
-          bars={bars}
-        />
-      </SafeAreaView>
-    </GestureHandlerRootView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Welcome" component={Welcome} />
+        <Stack.Screen name="WalletScreen" component={WalletScreen} />
+        <Stack.Screen name="Profile" component={ProfileInfoScreen} />
+        <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
+
+        
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-});
