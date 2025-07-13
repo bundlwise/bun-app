@@ -46,7 +46,7 @@ const RaycastWelcome = () => {
         {/* Welcome Text */}
         <View style={styles.textContainer}>
           <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.raycastText}>Raycast</Text>
+          <Text style={styles.raycastText}>Bundlwise</Text>
           <Text style={styles.descriptionText}>
             A collection of powerful{'\n'}productivity tools in your pocket
           </Text>
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: 80,
-    top:310,
+    marginBottom: '45.36%',
+    top:'46.18%',
   },
   welcomeText: {
     color: '#fff',
@@ -131,12 +131,13 @@ const styles = StyleSheet.create({
   },
   buttonShiftWrapper: {
     marginTop: 340, // 👈 only this shifts buttons down
+    marginBottom: ('12.29%')
   },
   
   buttonContainer: {
     width: ('87.34%'),
     height: (54.5),
-    gap: (12),
+    gap: (11),
     marginBottom: ('13.39%'),
     
   },
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
   createAccountContainer: {
     backgroundColor: '#1A1A1A',
     width: 343,
-    height: 54.5,
-    marginBottom: 8, // ✅ Try 8 or 12 for a tight but readable gap
+    height: '87.96%',
+    marginBottom: '6.4%', // ✅ Try 8 or 12 for a tight but readable gap
     borderRadius: 15,
   },
   
