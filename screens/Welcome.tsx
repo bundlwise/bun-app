@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     position: 'absolute',
-    top:verticalScale(70), // 🔁 Adjust as per how much down you want
+    top:"13.30%", // 🔁 Adjust as per how much down you want
     alignSelf: 'center',
   },
   
@@ -134,10 +134,10 @@ const styles = StyleSheet.create({
   },
   
   buttonContainer: {
-    width: (343),
+    width: ('87.34%'),
     height: (54.5),
     gap: (12),
-    marginBottom: (40),
+    marginBottom: ('13.39%'),
     
   },
   loginButton: {
