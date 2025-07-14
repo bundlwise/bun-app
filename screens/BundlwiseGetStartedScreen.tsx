@@ -9,7 +9,7 @@ const BundlwiseGetStartedScreen = () => {
         <View style={styles.child}>
           <Image
             source={require("../assets/isolatedCube.webp")}
-            style={{ width: "80%", height: "80%" }}
+            style={{ width: "50%", height: "50%" }}
             resizeMode="cover"
           />
 
@@ -30,6 +30,10 @@ const BundlwiseGetStartedScreen = () => {
         <Text style={styles.welcomeTo}>
           Welcome to{"\n"}Bundlwise
         </Text>
+        <Text style={styles.description}>
+  Manage subscriptions at your fingertips
+</Text>
+
 
         <View style={[styles.rectangleParent, styles.groupChildLayout]}>
           <View style={[styles.groupChild, styles.groupChildLayout]} />
@@ -91,6 +95,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
     letterSpacing: -0.1,
     fontWeight: "700",
+    color: "#fff",
+    textAlign: "left",
+    position: "absolute",
+  },
+  description: {
+    top: 469,
+    fontSize: 16,
+    fontWeight: "400",
     color: "#fff",
     textAlign: "left",
     position: "absolute",
