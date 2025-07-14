@@ -1,409 +1,336 @@
-import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-
+import React, { useRef } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  Alert,
   StyleSheet,
-  Keyboard,
-  TouchableWithoutFeedback,
+  StatusBar,
   SafeAreaView,
+  TouchableOpacity,
+  Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
-const DEFAULT_IMAGE = 'https://placehold.co/100x100/png?text=No+Photo';
-
-export default function ProfileInfoScreen() {
-  const [profileImage, setProfileImage] = useState(DEFAULT_IMAGE);
-  const [firstName, setFirstName] = useState('Arian');
-  const [lastName, setLastName] = useState('Zesan');
-  const [email] = useState('arianzesan@gmail.com');
-  const [phone, setPhone] = useState('+91 ');
-  const navigation = useNavigation<any>();
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 
 
-  const showInfo = (field: 'email' | 'phone') => {
-    const titles = {
-      email: 'Email Info',
-      phone: 'Phone Info',
-    };
-    const messages = {
-      email: 'This is your registered email address.',
-      phone: 'This is your registered phone number.',
-    };
-    Alert.alert(titles[field], messages[field]);
-  };
+const SettingsScreen = () => {
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-  const handleUpload = () => {
-    Alert.alert(
-      'Select Option',
-      'Choose a method to set your profile photo',
-      [
-        {
-          text: 'Take a Photo',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission Denied', 'Camera access is required to take a photo.');
-              return;
-            }
+  const navigation = useNavigation();
 
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.7,
-            });
+  const logoOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
-            if (!result.canceled && result.assets?.length > 0) {
-              setProfileImage(result.assets[0].uri);
-            }
-          },
-        },
-        {
-          text: 'Choose from Gallery',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission Denied', 'Gallery access is required to select a photo.');
-              return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.7,
-            });
-
-            if (!result.canceled && result.assets?.length > 0) {
-              setProfileImage(result.assets[0].uri);
-            }
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  const handleDeletePhoto = () => {
-    setProfileImage(DEFAULT_IMAGE);
-    Alert.alert('Picture Deleted', 'Your profile picture was removed.');
-  };
-
-  const handleSave = () => {
-    Keyboard.dismiss();
-    Alert.alert('Saved', 'Profile info has been saved.');
-  };
-
-  const handleChangePassword = () => {
-    Alert.alert('Change Password', 'Redirecting to change password screen.');
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action is irreversible.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => Alert.alert('Account Deleted', 'Your account has been deleted.'),
-        },
-      ]
-    );
-  };
+  const logoScale = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0.7],
+    extrapolate: 'clamp',
+  });
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient
-        colors={['#292734', '#1E1B23', '#121118', '#000000']}
-        locations={[0, 0.5, 0.6, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.container}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+
+      </View>
+
+      <Animated.ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       >
-        <KeyboardAwareScrollView
-          enableOnAndroid
-          extraScrollHeight={40}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
+        {/* Logo Section */}
+        <Animated.View
+          style={[
+            styles.logoSection,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
         >
-          <SafeAreaView style={{ flex: 1 }}>
-            {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Profile Info</Text>
-              <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('WalletScreen')}>
-
-                <Text style={styles.backArrow}>←</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Profile Photo */}
-            <View style={styles.photoSection}>
-              <Image
-                source={{ uri: profileImage }}
-                style={styles.profileImage}
-                onError={() => setProfileImage(DEFAULT_IMAGE)}
+          <View style={styles.logoBox}>
+            <Svg width={32} height={32} viewBox="0 0 16 18">
+              <Path
+                d="M11.0386 7.65363C11.2415 7.61853 11.4372 7.56993 11.6243 7.50873L11.6235 7.50783C12.9702 7.06323 13.8606 5.93913 13.8606 4.16253C13.8606 2.91604 13.2007 1.89184 12.2306 1.37704C11.4325 0.954042 10.5658 0.729043 9.69587 0.599443C7.62218 0.289844 5.5398 0.0126446 3.44479 4.46082e-05C2.12731 -0.00805537 1.56843 1.08814 1.29373 2.31034C0.955877 3.82054 0.722221 5.64483 0.759321 7.19823C0.783792 8.22872 1.15559 9.37082 2.40991 9.19172C4.26732 8.92712 6.02842 8.59142 7.81163 8.25122C8.87176 8.04873 9.939 7.84532 11.0386 7.65363ZM2.42491 17.9991H11.442L11.4428 18C13.788 18 15.2365 15.723 14.9681 13.1913C14.8055 11.6496 14.1756 9.99452 12.7871 9.46802C11.6788 9.04682 10.4584 9.23042 9.31145 9.40232C9.18593 9.42122 9.06121 9.44012 8.93728 9.45722C7.64428 9.64262 6.3568 9.87212 5.07012 10.1016C4.87593 10.1367 4.68174 10.1709 4.48834 10.206C4.42598 10.2168 4.36283 10.2276 4.29968 10.2393C3.39663 10.3986 2.39097 10.5768 1.53765 10.8774C0.6717 11.1825 0.370158 12.0753 0.22807 12.9852C0.167288 13.3749 0.130976 13.7691 0.0946648 14.1624C0.0836135 14.2785 0.0733516 14.3946 0.0623003 14.5107C-0.0308464 15.4476 -0.108995 16.4214 0.528033 17.1747C1.00798 17.7444 1.75157 17.9991 2.42491 17.9991Z"
+                fill="white"
               />
-              <View style={styles.photoInfo}>
-                <Text style={styles.photoTitle}>Update your Picture</Text>
-                <Text style={styles.photoSubtitle}>Upload a photo under 2 MB</Text>
-                <View style={styles.actionRow}>
-                  <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-                    <Text style={styles.uploadText}>Upload</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleDeletePhoto}>
-                    <Text style={styles.deleteText}>Delete Current Picture</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+            </Svg>
+          </View>
+        </Animated.View>
 
-            {/* Form & Actions */}
-            <View style={styles.contentWrapper}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>First Name</Text>
-                <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
-              </View>
+        {/* Pro Card */}
+        <View style={styles.proCard}>
+          <View style={styles.proContent}>
+            <Text style={styles.proTitle}> Bundlewise</Text>
+            <Text style={styles.proSubtitle}>
+              Unlock AI models, sync & more
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.tryFreeButton}>
+            <Ionicons name="gift-outline" size={16} color="#fff" style={styles.trashIcon} />
+            <Text style={styles.tryFreeText}>Try Free</Text>
+          </TouchableOpacity>
+        </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Last Name</Text>
-                <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
-              </View>
+        {/* Message Limit */}
+        <View style={styles.messagePillContainer}>
+          <View style={styles.messageProgressBar}>
+            <View style={styles.messageProgressFill} />
+            <Text style={styles.messagePillText}>50 AI Messages Left</Text>
+          </View>
+        </View>
 
-              <View style={styles.inputRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>E-mail</Text>
-                  <TextInput
-                    style={[styles.input, { color: '#999' }]}
-                    value={email}
-                    editable={false}
-                  />
-                </View>
-                <TouchableOpacity style={styles.infoCircle} onPress={() => showInfo('email')}>
-                  <Text style={styles.infoText}>i</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.inputRow}>
-  <View style={{ flex: 1 }}>
-    <Text style={styles.label}>Phone Number</Text>
-    <TextInput
-  style={styles.input}
-  value={phone}
-  onChangeText={(text) => {
-    // Always ensure text starts with "+91 "
-    if (!text.startsWith('+91 ')) {
-      text = '+91 ';
-    }
-
-    // Extract digits after +91
-    const raw = text.replace('+91 ', '').replace(/[^\d]/g, '');
-
-    // Limit to 10 digits
-    const limited = raw.slice(0, 10);
-
-    // Final formatted text
-    setPhone('+91 ' + limited);
-  }}
-  placeholder="Enter your number"
-  placeholderTextColor="#888"
-  keyboardType="number-pad"
-  selection={{
-    start: phone.length,
-    end: phone.length,
-  }}
-  autoCorrect={false}
-  autoComplete="tel"
-  textContentType="telephoneNumber"
-/>
-
-  </View>
-  <TouchableOpacity style={styles.infoCircle} onPress={() => showInfo('phone')}>
-    <Text style={styles.infoText}>i</Text>
+        {/* Menu Section */}
+        <View style={styles.menuSection}>
+        <View style={styles.sectionGroup}>
+  <TouchableOpacity style={styles.menuItem}>
+    <Ionicons name="document-text-outline" size={20} color="#fff" />
+    <Text style={styles.menuText}>Changelog</Text>
+    <Ionicons name="chevron-forward" size={16} color="#666" />
   </TouchableOpacity>
 </View>
 
 
-              <TouchableOpacity style={styles.primaryButton} onPress={handleChangePassword}>
-                <Text style={styles.primaryButtonText}>Change your Password</Text>
-              </TouchableOpacity>
+          {/* Account + Subscription Group */}
+          <View style={styles.sectionGroup}>
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="person-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Account</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.itemDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="card-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Subscription</Text>
+              <Text style={styles.subscriptionFree}>Free</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-              <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-                <Text style={styles.deleteButtonText}>Delete your Account</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </KeyboardAwareScrollView>
-      </LinearGradient>
-    </TouchableWithoutFeedback>
+        {/* Customize */}
+        <View style={styles.customizeSection}>
+          <Text style={styles.sectionTitle}>CUSTOMIZE</Text>
+          <View style={styles.sectionGroup}>
+  <TouchableOpacity style={styles.menuItem}>
+    <Ionicons name="color-palette-outline" size={20} color="#fff" />
+    <Text style={styles.menuText}>Theme</Text>
+    <Text style={styles.themeValue}>System</Text>
+    <Ionicons name="chevron-down" size={16} color="#666" />
+  </TouchableOpacity>
+</View>
+
+        </View>
+
+        {/* Discover Section */}
+        <View style={styles.discoverSection}>
+          <Text style={styles.sectionTitle}>DISCOVER</Text>
+          <View style={styles.sectionGroup}>
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="share-social-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Share Extension</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.itemDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="add-circle-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Share Actions</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.itemDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="rocket-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Shortcuts</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.itemDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="grid-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Widgets</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* More Section */}
+        <View style={styles.moreSection}>
+          <Text style={styles.sectionTitle}>MORE</Text>
+          <View style={styles.sectionGroup}>
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="help-circle-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Support</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+            <View style={styles.itemDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="information-circle-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>About</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Logout */}
+        <TouchableOpacity style={styles.logoutButton}>
+          <Ionicons name="log-out-outline" size={20} color="red" />
+          <Text style={styles.logoutText}>Log out</Text>
+        </TouchableOpacity>
+
+        {/* Bottom Indicator */}
+       
+      </Animated.ScrollView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#000' },
   header: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 25,
-  },
-  saveButton: {
-    backgroundColor: '#48934f',
+    justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    position: 'relative',
+  },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
+  closeButton: { position: 'absolute', right: 20, padding: 5 },
+  content: { flex: 1, paddingHorizontal: 20 },
+  logoSection: {
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: 70,
+  },
+  logoBox: {
+    width: 64,
+    height: 64,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  proCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#333',
+    marginBottom: 20,
+  },
+  proContent: { flex: 1, paddingRight: 10 },
+  proTitle: { fontSize: 18, fontWeight: '600', color: '#fff', marginBottom: 6 },
+  proSubtitle: { fontSize: 13.5, color: '#aaa', lineHeight: 20 },
+  tryFreeButton: {
+    backgroundColor: '#333',
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 18,
-    color: 'white',
-    left: -18,
-  },
-  backButton: {
-    backgroundColor: '#3b3b3b',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backArrow: {
-    fontSize: 20,
-    color: '#fff',
-  },
-  photoSection: {
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  trashIcon: { marginRight: 6 },
+  tryFreeText: { color: '#fff', fontSize: 14, fontWeight: '500' },
+  messagePillContainer: {
     marginBottom: 30,
-    marginLeft: 24,
+    paddingHorizontal: 4,
   },
-  profileImage: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    backgroundColor: '#444',
-  },
-  photoInfo: {
-    marginLeft: 16,
-  },
-  photoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 3,
-    color: '#fff',
-  },
-  photoSubtitle: {
-    fontSize: 12,
-    color: '#ccc',
-    marginBottom: 10,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  uploadButton: {
-    backgroundColor: '#4e9e9e',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 12,
-    marginRight: 15,
-  },
-  uploadText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  deleteText: {
-    color: '#f66',
-    fontWeight: '500',
-    fontSize: 14,
-  },
-  contentWrapper: {
-    marginTop: 30,
-    marginHorizontal: 24,
-  },
-  inputGroup: {
-    marginBottom: 18,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  label: {
-    fontWeight: '700',
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#fff',
-  },
-  input: {
-    borderRadius: 12,
-    backgroundColor: '#2d2b33',
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#fff',
-  },
-  infoCircle: {
-    marginTop:20,
-    marginLeft: 10,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#444',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoText: {
-    fontWeight: '700',
-    color: '#fff',
-  },
-  primaryButton: {
-    backgroundColor: '#111',
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 25,
-    alignSelf: 'center',
-    width: '70%',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  deleteButton: {
-    backgroundColor: '#f6f0f020',
+  messageProgressBar: {
+    height: 46,
+    backgroundColor: '#1c1c1e',
     borderRadius: 20,
-    paddingVertical: 14,
-    marginTop: 20,
-    alignSelf: 'center',
-    width: '70%',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  deleteButtonText: {
-    textAlign: 'center',
+  messageProgressFill: {
+    position: 'absolute',
+    left: 14,
+    top: 16,
+    bottom: 6,
+    width: '45%',
+    backgroundColor: '#2e2e2f',
+    borderRadius: 20,
+    height: 16,
+  },
+  messagePillText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'right',
+    paddingRight: 12,
+  },
+  menuSection: { marginBottom: 30 },
+  sectionGroup: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  itemDivider: {
+    height: 1,
+    backgroundColor: '#2c2c2e',
+    marginHorizontal: 16,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  menuText: { color: '#fff', fontSize: 16, marginLeft: 12, flex: 1 },
+  subscriptionFree: { color: '#888', fontSize: 14, marginRight: 8 },
+  customizeSection: { marginBottom: 30 },
+  sectionTitle: {
+    color: '#666',
+    fontSize: 12,
     fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  themeValue: { color: '#888', fontSize: 14, marginRight: 8 },
+  discoverSection: { marginBottom: 30 },
+  moreSection: { marginBottom: 30 },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    marginBottom: 40,
+  },
+  logoutText: {
+    color: 'red',
     fontSize: 16,
-    color: '#f66',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  bottomIndicator: {
+    backgroundColor: '#333',
+    height: 4,
+    borderRadius: 2,
+    width: '60%',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
 });
 
+export default SettingsScreen;
