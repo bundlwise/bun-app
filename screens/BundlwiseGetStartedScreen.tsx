@@ -5,7 +5,8 @@ import Svg, { Path } from "react-native-svg";
 const BundlwiseGetStartedScreen = () => {
   return (
     <View style={[styles.view, styles.viewBg]}>
-      <View style={styles.logoBox}>
+      <View style={styles.screenLayout}>
+
         <View style={styles.child}>
           <Image
             source={require("../assets/isolatedCube.webp")}
@@ -27,13 +28,10 @@ const BundlwiseGetStartedScreen = () => {
           </Svg>
         </View>
 
-        <Text style={styles.welcomeTo}>
-          Welcome to{"\n"}Bundlwise
-        </Text>
-        <Text style={styles.description}>
-  Manage subscriptions at your fingertips
-</Text>
-
+        <View style={styles.welcomeTextContainer}>
+          <Text style={styles.welcomeTextTitle}>Welcome to{"\n"}Bundlwise</Text>
+          <Text style={styles.welcomeTextDescription}>Manage subscriptions at your fingertips</Text>
+        </View>
 
         <View style={[styles.rectangleParent, styles.groupChildLayout]}>
           <View style={[styles.groupChild, styles.groupChildLayout]} />
@@ -50,6 +48,55 @@ const BundlwiseGetStartedScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  // this should be in the top of the every screen
+  viewBg: {
+    backgroundColor: "#000",
+    flex: 1,
+  },
+  view: {
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+  },
+
+  // this should be in the top of the every screen
+  screenLayout: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  // Middle text section
+  viewWelcomeTo: {
+    flex: 1,
+  },
+  welcomeTextContainer: {
+    top: 387,
+    position: "absolute",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  welcomeTextTitle: {
+    fontSize: 32,
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: -0.1,
+    // lineHeight: 18,
+  },
+  welcomeTextDescription: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "400",
+    textAlign: "center",
+    letterSpacing: -0.1,
+  },
+
+
+
   groupChildLayout: {
     height: 50,
     width: 346,
@@ -57,7 +104,7 @@ const styles = StyleSheet.create({
   },
   groupChild: {
     borderRadius: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#1B1B1C",
     left: 0,
     top: 0,
   },
@@ -90,15 +137,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
     position: "absolute",
   },
-  welcomeTo: {
-    top: 387,
-    fontSize: 32,
-    letterSpacing: -0.1,
-    fontWeight: "700",
-    color: "#fff",
-    textAlign: "left",
-    position: "absolute",
-  },
+
   description: {
     top: 469,
     fontSize: 16,
@@ -106,15 +145,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "left",
     position: "absolute",
-  },
-  viewBg: {
-    backgroundColor: "#000",
-    flex: 1,
-  },
-  view: {
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
   },
   child: {
     top: 112,
@@ -125,11 +155,6 @@ const styles = StyleSheet.create({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-  },
-  logoBox: {
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
   },
   overlayIcon: {
     position: "absolute",
