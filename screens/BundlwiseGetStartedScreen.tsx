@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     top: 682,
   },
   rectangleCreateAcc: {
-    top: 682 + 50 + 12,
+    top: 682 + 50 + 11.1,
     position: "absolute",
   },
   createAcc: {
