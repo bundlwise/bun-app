@@ -64,22 +64,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     flex: 1,
     padding: 20,
-    paddingTop: 80,
+    paddingTop: 80.2,
     alignItems: "center",
-    marginTop:-70,
+    marginTop:-71,
   },
   title: {
     fontSize: 17,
     color: "#fff",
     fontWeight: "500",
     marginBottom: 24,
-    marginTop:5
+    marginTop:4.6
   },
 
   // Top fields group
   topGroup: {
     gap: 8,
-    marginBottom: 79,
+    marginBottom: 80,
     
 
   },
@@ -134,7 +134,8 @@ const styles = StyleSheet.create({
   orText: {
     color: "#aaa",
     fontSize: 16,
-    marginTop: -20,   // 👈 Exactly 30px below Magic Link button
+    marginTop: -40,   // 👈 Exactly 30px below Magic Link button
+    top:-10,
     marginBottom: 20,
     opacity: 0.3
 
