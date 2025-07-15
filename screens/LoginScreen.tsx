@@ -7,12 +7,19 @@ import {
   TouchableOpacity,
   StatusBar,
 } from "react-native";
-import { verticalScale } from 'react-native-size-matters';
+import { Ionicons } from '@expo/vector-icons';
+import { verticalScale } from "react-native-size-matters";
 
 const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
+
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton}>
+        <Ionicons name="chevron-back" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Log in</Text>
 
       {/* Top Group: Email, Password, Magic Link */}
@@ -42,17 +49,26 @@ const LoginScreen = () => {
       {/* Bottom Group: Apple, GitHub, Google */}
       <View style={styles.bottomGroup}>
         <TouchableOpacity style={[styles.button, styles.appleButton]}>
-          <Text style={[styles.buttonText, styles.appleButtonText]}>
-            Continue with Apple
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Ionicons name="logo-apple" size={18} color="#000" style={{ left: -70 }} />
+            <Text style={[styles.buttonText, styles.appleButtonText]}>
+              Continue with Apple
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Continue with GitHub</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Ionicons name="logo-github" size={18} color="#fff" style={{ left: -70 }} />
+            <Text style={styles.buttonText}>Continue with GitHub</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Continue with Google</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Ionicons name="logo-google" size={18} color="#fff" style={{ left: -70 }} />
+            <Text style={styles.buttonText}>Continue with Google</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -66,24 +82,25 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 80.2,
     alignItems: "center",
-    marginTop:-71,
+    marginTop: -74,
+  },
+  backButton: {
+    position: "absolute",
+    top: verticalScale(68),
+    left: 5,
+    zIndex: 10,
   },
   title: {
     fontSize: 17,
     color: "#fff",
     fontWeight: "500",
     marginBottom: 24,
-    marginTop:4.6
+    marginTop: 4.6,
   },
-
-  // Top fields group
   topGroup: {
     gap: 8,
     marginBottom: 80,
-    
-
   },
-
   input: {
     height: 56,
     width: 358,
@@ -91,9 +108,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     color: "#fff",
     paddingHorizontal: 16,
-    fontSize: 15,
+    fontSize: 16,
   },
-
   button: {
     height: 56,
     width: 358,
@@ -102,46 +118,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   disabledButton: {
     backgroundColor: "#2C2C2E",
   },
-
   disabledButtonText: {
     color: "#888",
     fontSize: 16,
     fontWeight: "600",
   },
-
   buttonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
     letterSpacing: -0.5,
     fontFamily: "inter",
-    
   },
-
   appleButton: {
-    backgroundColor: "#fff", // ✅ Apple button WHITE BG
+    backgroundColor: "#fff",
   },
   appleButtonText: {
-    color: "#000",            // ✅ Black text for visibility on white
-    fontWeight: "500",
+    color: "#000",
+    fontWeight: "600",
   },
-  
-
   orText: {
     color: "#aaa",
     fontSize: 16,
-    marginTop: -40,   // 👈 Exactly 30px below Magic Link button
-    top:-10,
+    marginTop: -40,
+    top: -10,
     marginBottom: 20,
-    opacity: 0.3
-
+    opacity: 0.3,
   },
-
-  // Bottom social buttons
   bottomGroup: {
     gap: 8,
   },

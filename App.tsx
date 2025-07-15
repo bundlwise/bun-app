@@ -1,20 +1,14 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import LoginScreen from './screens/LoginScreen'; // Make sure this path matches your folder structure
+import { SafeAreaView, StatusBar } from 'react-native';
+import CreateAccountScreen from './screens/CreateAccountScreen'; // adjust if your file path is different
 
 const App = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <LoginScreen />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+      <StatusBar barStyle="light-content" />
+      <CreateAccountScreen />
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-});
 
 export default App;
