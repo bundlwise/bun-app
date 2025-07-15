@@ -1,14 +1,11 @@
 import React from 'react';
-import { SafeAreaView, StatusBar } from 'react-native';
-import CreateAccountScreen from './screens/CreateAccountScreen'; // adjust if your file path is different
+import { SafeAreaView } from 'react-native';
+import RaycastCloneScreen from './screens/RaycastCloneScreen'; // Assuming you're keeping screen inside src/screens
 
-const App = () => {
+export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
-      <StatusBar barStyle="light-content" />
-      <CreateAccountScreen />
+    <SafeAreaView style={{ flex: 1 }}>
+      <RaycastCloneScreen />
     </SafeAreaView>
   );
-};
-
-export default App;
+}
