@@ -1,11 +1,14 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native';
-import RaycastCloneScreen from './screens/RaycastCloneScreen'; // Assuming you're keeping screen inside src/screens
+import { SafeAreaView, StatusBar } from 'react-native';
+import ExpenseTracker from './screens/ExpenseTracker'; // Make sure this file exists
 
-export default function App() {
+const App = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <RaycastCloneScreen />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <ExpenseTracker />
     </SafeAreaView>
   );
-}
+};
+
+export default App;
