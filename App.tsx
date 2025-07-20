@@ -1,14 +1,19 @@
-import React from 'react';
-import { SafeAreaView, StatusBar } from 'react-native';
-import ExpenseTracker from './screens/ExpenseTracker'; // Make sure this file exists
+// App.tsx
 
-const App = () => {
+import React from 'react';
+import { SafeAreaView, StyleSheet } from 'react-native';
+import ExpenseTracker from './screens/ExpenseTracker.tsx'; // Adjust path if needed
+
+export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+    <SafeAreaView style={styles.container}>
       <ExpenseTracker />
     </SafeAreaView>
   );
-};
+}
 
-export default App;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

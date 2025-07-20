@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSmartFetch } from '../hooks/useSmartFetch'; // ✅ Update this path if needed
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -20,103 +21,143 @@ const formatINR = (amount: number) =>
     maximumFractionDigits: 2,
   })}`;
 
-// Define types for category and monthly data
-interface Category {
-  name: string;
-  value: string;
-  paidVia?: string;
-}
-
+// ✅ Types
 interface MonthlyData {
-  total: number;
+  app_icon_url: string;
+  app_name: string;
+  amount: number;
+  renewal_date: string;
+  end_date: string;
+  app_usage: string;
+  paid_via: string;
   chartData: {
     labels: string[];
     datasets: { data: number[] }[];
   };
-  categories: Category[];
 }
+
+interface MonthlyDataFromAPI {
+  amount: number;
+  renewal_date: string;
+  subscription_end_date: string;
+  payment_method: string;
+  app_name: string; // ✅ Added missing property
+  app_icon_url: string; // ✅ Added missing property
+  // add more fields if needed
+}
+
+// ✅ Transform backend → UI shape
+const transformBackendData = (api: MonthlyDataFromAPI): MonthlyData => ({
+  amount: Number(api.amount),
+  renewal_date: api.renewal_date,
+  end_date: api.subscription_end_date,
+  paid_via: api.payment_method,
+  app_name: api.app_name, // ✅ coming from backend
+  app_icon_url: api.app_icon_url, // ✅ coming from backend
+  app_usage: '72% usage', // you can replace with actual calculation if needed
+  chartData: {
+    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    datasets: [{ data: [520, 530, 510, 522.12] }],
+  },
+});
+
 
 const ExpenseTracker = () => {
   const [selectedMonth, setSelectedMonth] = useState('Jul 2024');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Comment out API fetch for now to avoid errors
+  // const { data: apiData } = useSmartFetch<MonthlyDataFromAPI>({
+  //   url: 'https://your-backend.com/user/subscription', // ✅ Update this to real API
+  // });
+
   const monthlyData: Record<string, MonthlyData> = {
     'Jul 2024': {
-      total: 2082.12,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 2082.12,
+      renewal_date: '20 Jul 2024',
+      end_date: '23 Jul 2024',
+      app_usage: '72% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [520, 530, 510, 522.12] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 Jul 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 Jul 2024' },
-        { name: 'App Usage', value: '72% usage' },
-      ],
     },
     'Jun 2024': {
-      total: 1975.0,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 1975.0,
+      renewal_date: '20 Jun 2024',
+      end_date: '23 Jun 2024',
+      app_usage: '69% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [480, 500, 490, 505] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 Jun 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 Jun 2024' },
-        { name: 'App Usage', value: '69% usage' },
-      ],
     },
     'May 2024': {
-      total: 1900.25,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 1900.25,
+      renewal_date: '20 May 2024',
+      end_date: '23 May 2024',
+      app_usage: '66% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [460, 480, 470, 490.25] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 May 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 May 2024' },
-        { name: 'App Usage', value: '66% usage' },
-      ],
     },
     'Apr 2024': {
-      total: 1825.75,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 1825.75,
+      renewal_date: '20 Apr 2024',
+      end_date: '23 Apr 2024',
+      app_usage: '63% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [450, 460, 455, 460.75] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 Apr 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 Apr 2024' },
-        { name: 'App Usage', value: '63% usage' },
-      ],
     },
     'Mar 2024': {
-      total: 1750.0,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 1750.0,
+      renewal_date: '20 Mar 2024',
+      end_date: '23 Mar 2024',
+      app_usage: '61% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [430, 440, 435, 445] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 Mar 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 Mar 2024' },
-        { name: 'App Usage', value: '61% usage' },
-      ],
     },
     'Feb 2024': {
-      total: 1650.8,
+      app_icon_url: "https://yourcdn.com/uploads/random-image.jpg" ,
+      app_name: "Spotify",
+      amount: 1650.8,
+      renewal_date: '20 Feb 2024',
+      end_date: '23 Feb 2024',
+      app_usage: '59% usage',
+      paid_via: 'Google Pay',
       chartData: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [{ data: [410, 415, 410.5, 415.3] }],
       },
-      categories: [
-        { name: 'Renewal Date', value: '20 Feb 2024', paidVia: 'Google Pay' },
-        { name: 'Next Renewal', value: '23 Feb 2024' },
-        { name: 'App Usage', value: '59% usage' },
-      ],
     },
   };
-
   const months = Object.keys(monthlyData);
-  const currentData = monthlyData[selectedMonth as keyof typeof monthlyData];
+
+  // ✅ Use API data if available, else dummy
+  // const currentData: MonthlyData = apiData
+  //   ? transformBackendData(apiData)
+  //   : monthlyData[selectedMonth as keyof typeof monthlyData];
+  const currentData: MonthlyData = monthlyData[selectedMonth as keyof typeof monthlyData];
 
   const chartConfig = {
     backgroundGradientFrom: '#1f1f27',
@@ -135,18 +176,18 @@ const ExpenseTracker = () => {
     },
   };
 
-  const renderCategoryItem = ({ item }: { item: Category }) => (
+  const renderDetailItem = (label: string, value: string) => (
     <View style={styles.categoryItem}>
       <View style={styles.categoryLeft}>
         <View style={styles.categoryDot} />
         <View>
-          <Text style={styles.categoryName}>{item.name}</Text>
-          {item.paidVia && (
-            <Text style={styles.paidViaText}>Paid via {item.paidVia}</Text>
+          <Text style={styles.categoryName}>{label}</Text>
+          {label === 'Renewal Date' && (
+            <Text style={styles.paidViaText}>Paid via {currentData.paid_via}</Text>
           )}
         </View>
       </View>
-      <Text style={styles.categoryAmount}>{item.value}</Text>
+      <Text style={styles.categoryAmount}>{value}</Text>
     </View>
   );
 
@@ -204,7 +245,7 @@ const ExpenseTracker = () => {
               </TouchableOpacity>
             </View>
           </View>
-          <Text style={styles.expenseAmount}>−{formatINR(currentData.total)}</Text>
+          <Text style={styles.expenseAmount}>−{formatINR(currentData.amount)}</Text>
         </View>
 
         <View style={styles.chartContainer}>
@@ -228,13 +269,9 @@ const ExpenseTracker = () => {
         </View>
 
         <View style={styles.categoriesContainer}>
-          <FlatList
-            data={currentData.categories}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.name}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
+          {renderDetailItem('Renewal Date', currentData.renewal_date)}
+          {renderDetailItem('Next Renewal', currentData.end_date)}
+          {renderDetailItem('App Usage', currentData.app_usage)}
         </View>
 
         <View style={styles.buttonRow}>

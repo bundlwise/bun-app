@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,27 @@ import {
   TouchableOpacity,
   StatusBar,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import { verticalScale } from "react-native-size-matters";
+import { useSmartFetch } from "../hooks/useSmartFetch"; // ✅ hook import
 
 const LoginScreen = () => {
+  const [user_email, setUserEmail] = useState("");     // ✅ using DB key
+  const [user_password, setUserPassword] = useState(""); // ✅ using DB key
+
+  const { refetch, data, loading, error } = useSmartFetch({
+    url: "https://your-api.com/api/login",
+    method: "POST",
+    body: {
+      user_email,
+      user_password,
+    },
+  });
+
+  const submitLogin = () => {
+    refetch(); // ✅ trigger request
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -28,18 +45,24 @@ const LoginScreen = () => {
           placeholder="Email address"
           placeholderTextColor="#888"
           style={styles.input}
+          value={user_email}
+          onChangeText={setUserEmail} // ✅ update via DB key
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
         <TextInput
           placeholder="Password (optional)"
           placeholderTextColor="#888"
           style={styles.input}
           secureTextEntry
+          value={user_password}
+          onChangeText={setUserPassword} // ✅ update via DB key
         />
         <TouchableOpacity
-          style={[styles.button, styles.disabledButton]}
-          disabled
+          style={styles.button}
+          onPress={submitLogin}
         >
-          <Text style={styles.disabledButtonText}>Send Magic Link</Text>
+          <Text style={styles.buttonText}>Send Magic Link</Text>
         </TouchableOpacity>
       </View>
 
@@ -153,4 +176,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default LoginScreen; 

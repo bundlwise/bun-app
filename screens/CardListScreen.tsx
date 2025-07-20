@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useSmartFetch } from '../hooks/useSmartFetch';
+
 
 import {
   View,
@@ -17,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const CardItem = ({ title, subtitle, avatar, downloads, amount, icon }: any) => {
   const imageSource = typeof icon === 'string' ? { uri: icon } : icon;
   
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
 
   return (
     <View style={styles.card}>
@@ -50,16 +52,14 @@ const CardItem = ({ title, subtitle, avatar, downloads, amount, icon }: any) => 
 
 // 🔹 Main Component
 const CSSCardList = () => {
-  const navigation = useNavigation();
-  const [cards, setCards] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const navigation = useNavigation();
 
   // 🧪 Dummy data fallback (temporary)
   const dummyData = [
     {
       title: 'CSS.GG',
       subtitle: 'Open-source CSS, SVG and Figma UI Icons Available in SVG Sprite, styled-components, NPM & API',
-      icon: require('../assets/Screenshot 2025-07-12 at 8.28.45 PM.png'),
+      icon: require('../assets/google.png'),
       avatar: 'https://avatars.githubusercontent.com/u/1857554?v=4',
       downloads: '2,281',
       amount: '₹2,281',
@@ -67,7 +67,7 @@ const CSSCardList = () => {
     {
       title: 'ChatGPT',
       subtitle: 'Bringing the power of artificial intelligence to everyone — anytime, anywhere — to think, create, and solve',
-      icon: require('../assets/chatgpt.png'),
+      icon: require('../assets/google.png'),
       avatar: 'https://avatars.githubusercontent.com/u/23264?v=4',
       downloads: '3,999',
       amount: '₹1,299',
@@ -75,7 +75,7 @@ const CSSCardList = () => {
     {
       title: 'GitHub',
       subtitle: 'The world’s leading platform for software development — where millions of developers collaborate, innovate',
-      icon: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+      icon: '../assets/google.png',
       avatar: 'https://avatars.githubusercontent.com/u/839962?v=4',
       downloads: '5,232',
       amount: '₹3,999',
@@ -83,21 +83,23 @@ const CSSCardList = () => {
     {
       title: 'Heroicons',
       subtitle: 'Unlimited entertainment. One simple subscription. Watch stories unfold across the world, whenever and wherever you want',
-      icon: 'https://avatars.githubusercontent.com/u/23264?v=4',
+      icon: '../assets/google.png',
       avatar: 'https://avatars.githubusercontent.com/u/23264?v=4',
       downloads: '1,800',
       amount: '₹899',
     },
   ];
 
-  // 🛠️ Future API fetch logic placeholder
-  useEffect(() => {
-    // Simulate network delay (remove this once real API used)
-    setTimeout(() => {
-      setCards(dummyData); // 🔁 Replace this with real API response
-      setLoading(false);
-    }, 500); // adjust as needed
-  }, []);
+  // ��️ API fetch logic
+  // const { data, loading, error } = useSmartFetch({
+  //   url: 'https://your-api.com/payment-history',
+  //   method: 'GET',
+  //   auto: true,
+  // });
+
+  // Use API data if available, otherwise fallback to dummyData
+  // const cardData = data && Array.isArray(data) && data.length > 0 ? data : dummyData;
+  const cardData = dummyData;
 
   return (
     <LinearGradient
@@ -109,23 +111,25 @@ const CSSCardList = () => {
     >
       {/* Sticky Header */}
       <View style={styles.headerRow}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-  <Feather name="arrow-left" size={20} color="#fff" />
-</TouchableOpacity>
-
+        <TouchableOpacity style={styles.backButton} >
+          <Feather name="arrow-left" size={20} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.heading}>Payment History</Text>
       </View>
-
       {/* Scrollable Cards */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.cardsWrapper}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#fff" />
-          ) : (
-            cards.map((item, index) => (
-              <CardItem key={index} {...item} />
-            ))
-          )}
+          {cardData.map((item: any, index: number) => (
+            <CardItem
+              key={index}
+              title={item.company_name || item.title}
+              subtitle={item.subscription_type ? `${item.subscription_type} • Starts ${item.subscription_start_date}` : item.subtitle}
+              avatar={item.user_profile_pic || item.avatar || 'https://cdn.myapp.com/default-avatar.png'}
+              downloads={item.downloads || '1,000'}
+              amount={item.amount ? `₹${item.amount}` : item.amount}
+              icon={item.company_icon || item.icon || 'https://cdn.myapp.com/icons/default.png'}
+            />
+          ))}
         </View>
       </ScrollView>
     </LinearGradient>
