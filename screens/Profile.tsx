@@ -7,16 +7,25 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../types/navigation';
+import { useGoogleAuth } from '../utils/authService';
 
+type ProfileScreenProps = {
+  route: RouteProp<RootStackParamList, 'Profile'>;
+  navigation: any;
+};
 
-const SettingsScreen = () => {
+const ProfileScreen = ({ route, navigation }: ProfileScreenProps) => {
+  const { userInfo, signOut } = useGoogleAuth();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const navigation = useNavigation();
+  // Get user from navigation params or from auth state
+  const user = route.params?.user || userInfo;
 
   const logoOpacity = scrollY.interpolate({
     inputRange: [0, 80],
@@ -30,6 +39,14 @@ const SettingsScreen = () => {
     extrapolate: 'clamp',
   });
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'BundlwiseGetStartedScreen' }],
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -39,8 +56,7 @@ const SettingsScreen = () => {
         <Text style={styles.headerTitle}>Settings</Text>
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-
+        </TouchableOpacity>
       </View>
 
       <Animated.ScrollView
@@ -52,7 +68,7 @@ const SettingsScreen = () => {
         )}
         scrollEventThrottle={16}
       >
-        {/* Logo Section */}
+        {/* User Profile Section */}
         <Animated.View
           style={[
             styles.logoSection,
@@ -62,20 +78,33 @@ const SettingsScreen = () => {
             },
           ]}
         >
-          <View style={styles.logoBox}>
-            <Svg width={32} height={32} viewBox="0 0 16 18">
-              <Path
-                d="M11.0386 7.65363C11.2415 7.61853 11.4372 7.56993 11.6243 7.50873L11.6235 7.50783C12.9702 7.06323 13.8606 5.93913 13.8606 4.16253C13.8606 2.91604 13.2007 1.89184 12.2306 1.37704C11.4325 0.954042 10.5658 0.729043 9.69587 0.599443C7.62218 0.289844 5.5398 0.0126446 3.44479 4.46082e-05C2.12731 -0.00805537 1.56843 1.08814 1.29373 2.31034C0.955877 3.82054 0.722221 5.64483 0.759321 7.19823C0.783792 8.22872 1.15559 9.37082 2.40991 9.19172C4.26732 8.92712 6.02842 8.59142 7.81163 8.25122C8.87176 8.04873 9.939 7.84532 11.0386 7.65363ZM2.42491 17.9991H11.442L11.4428 18C13.788 18 15.2365 15.723 14.9681 13.1913C14.8055 11.6496 14.1756 9.99452 12.7871 9.46802C11.6788 9.04682 10.4584 9.23042 9.31145 9.40232C9.18593 9.42122 9.06121 9.44012 8.93728 9.45722C7.64428 9.64262 6.3568 9.87212 5.07012 10.1016C4.87593 10.1367 4.68174 10.1709 4.48834 10.206C4.42598 10.2168 4.36283 10.2276 4.29968 10.2393C3.39663 10.3986 2.39097 10.5768 1.53765 10.8774C0.6717 11.1825 0.370158 12.0753 0.22807 12.9852C0.167288 13.3749 0.130976 13.7691 0.0946648 14.1624C0.0836135 14.2785 0.0733516 14.3946 0.0623003 14.5107C-0.0308464 15.4476 -0.108995 16.4214 0.528033 17.1747C1.00798 17.7444 1.75157 17.9991 2.42491 17.9991Z"
-                fill="white"
-              />
-            </Svg>
-          </View>
+          {user && user.picture ? (
+            <Image 
+              source={{ uri: user.picture }} 
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.logoBox}>
+              <Svg width={32} height={32} viewBox="0 0 16 18">
+                <Path
+                  d="M11.0386 7.65363C11.2415 7.61853 11.4372 7.56993 11.6243 7.50873L11.6235 7.50783C12.9702 7.06323 13.8606 5.93913 13.8606 4.16253C13.8606 2.91604 13.2007 1.89184 12.2306 1.37704C11.4325 0.954042 10.5658 0.729043 9.69587 0.599443C7.62218 0.289844 5.5398 0.0126446 3.44479 4.46082e-05C2.12731 -0.00805537 1.56843 1.08814 1.29373 2.31034C0.955877 3.82054 0.722221 5.64483 0.759321 7.19823C0.783792 8.22872 1.15559 9.37082 2.40991 9.19172C4.26732 8.92712 6.02842 8.59142 7.81163 8.25122C8.87176 8.04873 9.939 7.84532 11.0386 7.65363ZM2.42491 17.9991H11.442L11.4428 18C13.788 18 15.2365 15.723 14.9681 13.1913C14.8055 11.6496 14.1756 9.99452 12.7871 9.46802C11.6788 9.04682 10.4584 9.23042 9.31145 9.40232C9.18593 9.42122 9.06121 9.44012 8.93728 9.45722C7.64428 9.64262 6.3568 9.87212 5.07012 10.1016C4.87593 10.1367 4.68174 10.1709 4.48834 10.206C4.42598 10.2168 4.36283 10.2276 4.29968 10.2393C3.39663 10.3986 2.39097 10.5768 1.53765 10.8774C0.6717 11.1825 0.370158 12.0753 0.22807 12.9852C0.167288 13.3749 0.130976 13.7691 0.0946648 14.1624C0.0836135 14.2785 0.0733516 14.3946 0.0623003 14.5107C-0.0308464 15.4476 -0.108995 16.4214 0.528033 17.1747C1.00798 17.7444 1.75157 17.9991 2.42491 17.9991Z"
+                  fill="white"
+                />
+              </Svg>
+            </View>
+          )}
+          {user && (
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userEmail}>{user.email}</Text>
+            </View>
+          )}
         </Animated.View>
 
         {/* Pro Card */}
         <View style={styles.proCard}>
           <View style={styles.proContent}>
-            <Text style={styles.proTitle}> Bundlewise</Text>
+            <Text style={styles.proTitle}> Bundlwise</Text>
             <Text style={styles.proSubtitle}>
               Unlock AI models, sync & more
             </Text>
@@ -96,14 +125,13 @@ const SettingsScreen = () => {
 
         {/* Menu Section */}
         <View style={styles.menuSection}>
-        <View style={styles.sectionGroup}>
-  <TouchableOpacity style={styles.menuItem}>
-    <Ionicons name="document-text-outline" size={20} color="#fff" />
-    <Text style={styles.menuText}>Changelog</Text>
-    <Ionicons name="chevron-forward" size={16} color="#666" />
-  </TouchableOpacity>
-</View>
-
+          <View style={styles.sectionGroup}>
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="document-text-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Changelog</Text>
+              <Ionicons name="chevron-forward" size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
 
           {/* Account + Subscription Group */}
           <View style={styles.sectionGroup}>
@@ -126,14 +154,13 @@ const SettingsScreen = () => {
         <View style={styles.customizeSection}>
           <Text style={styles.sectionTitle}>CUSTOMIZE</Text>
           <View style={styles.sectionGroup}>
-  <TouchableOpacity style={styles.menuItem}>
-    <Ionicons name="color-palette-outline" size={20} color="#fff" />
-    <Text style={styles.menuText}>Theme</Text>
-    <Text style={styles.themeValue}>System</Text>
-    <Ionicons name="chevron-down" size={16} color="#666" />
-  </TouchableOpacity>
-</View>
-
+            <TouchableOpacity style={styles.menuItem}>
+              <Ionicons name="color-palette-outline" size={20} color="#fff" />
+              <Text style={styles.menuText}>Theme</Text>
+              <Text style={styles.themeValue}>System</Text>
+              <Ionicons name="chevron-down" size={16} color="#666" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Discover Section */}
@@ -185,13 +212,10 @@ const SettingsScreen = () => {
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={20} color="red" />
           <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
-
-        {/* Bottom Indicator */}
-       
       </Animated.ScrollView>
     </SafeAreaView>
   );
@@ -213,8 +237,8 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 20 },
   logoSection: {
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 70,
+    marginTop: 30,
+    marginBottom: 40,
   },
   logoBox: {
     width: 64,
@@ -225,6 +249,27 @@ const styles = StyleSheet.create({
     borderColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  userInfo: {
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#aaa',
   },
   proCard: {
     backgroundColor: '#1a1a1a',
@@ -323,14 +368,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
-  bottomIndicator: {
-    backgroundColor: '#333',
-    height: 4,
-    borderRadius: 2,
-    width: '60%',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
 });
 
-export default SettingsScreen;
+export default ProfileScreen;

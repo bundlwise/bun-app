@@ -59,7 +59,7 @@ const CSSCardList = () => {
     {
       title: 'CSS.GG',
       subtitle: 'Open-source CSS, SVG and Figma UI Icons Available in SVG Sprite, styled-components, NPM & API',
-      icon: require('../assets/Screenshot 2025-07-12 at 8.28.45 PM.png'),
+      icon: require('../assets/isolatedCube.webp'),
       avatar: 'https://avatars.githubusercontent.com/u/1857554?v=4',
       downloads: '2,281',
       amount: '₹2,281',
@@ -67,14 +67,14 @@ const CSSCardList = () => {
     {
       title: 'ChatGPT',
       subtitle: 'Bringing the power of artificial intelligence to everyone — anytime, anywhere — to think, create, and solve',
-      icon: require('../assets/chatgpt.png'),
+      icon: require('../assets/isolatedCube.webp'),
       avatar: 'https://avatars.githubusercontent.com/u/23264?v=4',
       downloads: '3,999',
       amount: '₹1,299',
     },
     {
       title: 'GitHub',
-      subtitle: 'The world’s leading platform for software development — where millions of developers collaborate, innovate',
+      subtitle: 'The world\'s leading platform for software development — where millions of developers collaborate, innovate',
       icon: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
       avatar: 'https://avatars.githubusercontent.com/u/839962?v=4',
       downloads: '5,232',

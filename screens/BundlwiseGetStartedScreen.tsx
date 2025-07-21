@@ -1,8 +1,37 @@
-import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { useGoogleAuth } from "../utils/authService";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
-const BundlwiseGetStartedScreen = () => {
+const BundlwiseGetStartedScreen = ({ navigation }: any) => {
+  const { signIn, isAuthenticated, userInfo, loading, error } = useGoogleAuth();
+
+  useEffect(() => {
+    // Navigate to main app when authenticated
+    if (isAuthenticated && userInfo) {
+      // Navigate to the main app screen (you'll need to create this)
+      // Replace 'Welcome' with your main app screen name
+      navigation.navigate('Welcome', { user: userInfo });
+    }
+  }, [isAuthenticated, userInfo, navigation]);
+
+  const handleLoginPress = () => {
+    signIn();
+  };
+
+  const handleCreateAccount = () => {
+    // For now, use the same Google SSO flow for both login and signup
+    signIn();
+  };
+
+  // Show error if auth fails
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Authentication Error", error);
+    }
+  }, [error]);
+
   return (
     <View style={[styles.view, styles.viewBg]}>
       <View style={styles.screenLayout}>
@@ -33,15 +62,38 @@ const BundlwiseGetStartedScreen = () => {
           <Text style={styles.welcomeTextDescription}>Manage subscriptions at your fingertips</Text>
         </View>
 
-        <View style={[styles.rectangleParent, styles.groupChildLayout]}>
-          <View style={[styles.groupChild, styles.groupChildLayout]} />
-          <Text style={styles.logIn}>Log in</Text>
-        </View>
+        {/* Google SSO Button */}
+        <GoogleSignInButton
+          onPress={handleLoginPress}
+          loading={loading}
+          style={styles.googleSignInButton}
+        />
 
-        <View style={[styles.rectangleCreateAcc, styles.groupChildLayout]}>
+        {/* Existing login button now uses the SSO */}
+        <TouchableOpacity 
+          style={[styles.rectangleParent, styles.groupChildLayout]}
+          onPress={handleLoginPress}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
+          <View style={[styles.groupChild, styles.groupChildLayout]} />
+          {loading ? (
+            <ActivityIndicator style={styles.loginLoader} color="#000" />
+          ) : (
+            <Text style={styles.logIn}>Log in</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Create account button */}
+        <TouchableOpacity 
+          style={[styles.rectangleCreateAcc, styles.groupChildLayout]}
+          onPress={handleCreateAccount}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
           <View style={[styles.groupChild, styles.groupChildLayout]} />
           <Text style={styles.createAcc}>Create Account</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -95,8 +147,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 
-
-
   groupChildLayout: {
     height: 50,
     width: 346,
@@ -104,7 +154,7 @@ const styles = StyleSheet.create({
   },
   groupChild: {
     borderRadius: 16,
-    backgroundColor: "#1B1B1C",
+    backgroundColor: "#FFFFFF",
     left: 0,
     top: 0,
   },
@@ -118,6 +168,12 @@ const styles = StyleSheet.create({
     color: "black",
     textAlign: "left",
     position: "absolute",
+  },
+  loginLoader: {
+    position: "absolute",
+    top: 15,
+    left: "50%",
+    marginLeft: -10,
   },
   rectangleParent: {
     top: 682,
@@ -160,6 +216,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10, // You can adjust if needed
     left: 10,
+  },
+  googleSignInButton: {
+    top: 610,
+    position: "absolute",
   },
 });
 
