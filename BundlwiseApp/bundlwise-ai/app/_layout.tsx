@@ -4,11 +4,38 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthProvider, useAuth } from '@/lib/auth';
 import '../lib/firebase'; // Initialize Firebase
 
-export default function RootLayout() {
+function AppContent() {
+  const { user, loading } = useAuth();
   const colorScheme = useColorScheme();
+
+  console.log('AppContent: user =', user, 'loading =', loading);
+
+  if (loading) {
+    console.log('AppContent: Showing loading screen');
+    return <LoadingScreen />;
+  }
+
+  console.log('AppContent: User authenticated =', !!user, 'Showing', user ? '(tabs)' : '(auth)');
+
+  return (
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -19,12 +46,8 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
