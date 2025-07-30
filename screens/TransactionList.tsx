@@ -1,33 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
   FlatList,
+  Image,
   ListRenderItem,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 type Transaction = {
-  id: string;
-  name: string;
-  icon: string;
-  subtitle: string;
-  amount: string;
-  address: string;
+  id: number;
+  company_name: string;
+  renewal_date: string;
+  amount: number;
+  currency: string;
+  usage_percentage: number;
 };
 
 const TransactionItem = ({ item }: { item: Transaction }) => {
   return (
     <View style={styles.row}>
-      <Image source={{ uri: item.icon }} style={styles.icon} />
+      <Image source={{ uri: 'https://cryptologos.cc/logos/appcoins-appc-logo.png' }} style={styles.icon} />
       <View style={styles.center}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.subtitle}>{item.subtitle}</Text>
+        <Text style={styles.name}>{item.company_name}</Text>
+        <Text style={styles.subtitle}>{item.renewal_date}</Text>
       </View>
       <View style={styles.right}>
-        <Text style={styles.amount}>{item.amount}</Text>
-        <Text style={styles.address}>{item.address}</Text>
+        <Text style={styles.amount}>{item.currency} {item.amount}</Text>
+        <Text style={styles.address}>{item.usage_percentage}% used</Text>
       </View>
     </View>
   );
@@ -35,54 +35,73 @@ const TransactionItem = ({ item }: { item: Transaction }) => {
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // 🔄 Replace this with real API later
     const fetchTransactions = async () => {
-      const dataFromBackend: Transaction[] = [
-        {
-          id: '1',
-          name: 'Apple-Music',
-          icon: 'https://cryptologos.cc/logos/appcoins-appc-logo.png',
-          subtitle: '12th June - 14th July',
-          amount: '450.098',
-          address: 'Auto-Payment',
-        },
-        {
-          id: '2',
-          name: 'Spotify',
-          icon: 'https://cryptologos.cc/logos/varenx-varen-logo.png',
-          subtitle: 'Upcoming',
-          amount: '22.00',
-          address: 'Amazon-Pay',
-        },
-        {
-          id: '3',
-          name: 'Om-Baba',
-          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-          subtitle: 'Dev',
-          amount: 'Growth',
-          address: 'Intern',
-        },
-        {
-          id: '4',
-          name: 'Raha',
-          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-          subtitle: '19 jan - 16 may',
-          amount: '1300',
-          address: 'Intern',
-        },
-        {
-          id: '5',
-          name: 'Subscribe',
-          icon: 'https://cryptologos.cc/logos/kucoin-shares-kcs-logo.png',
-          subtitle: '19 dec - 16 may',
-          amount: '1300',
-          address: 'rock',
-        }
-      ];
-      setTransactions(dataFromBackend.slice(0, 5));
-;
+      try {
+        setLoading(true);
+        const dataFromBackend: Transaction[] = [
+          {
+            id: 1,
+            company_name: 'Apple-Music',
+            renewal_date: '12th June - 14th July',
+            amount: 450.098,
+            currency: '₹',
+            usage_percentage: 75,
+          },
+          {
+            id: 2,
+            company_name: 'Spotify',
+            renewal_date: 'Upcoming',
+            amount: 22.00,
+            currency: '₹',
+            usage_percentage: 45,
+          },
+          {
+            id: 3,
+            company_name: 'Netflix',
+            renewal_date: 'Dev',
+            amount: 499,
+            currency: '₹',
+            usage_percentage: 90,
+          },
+          {
+            id: 4,
+            company_name: 'Prime',
+            renewal_date: '19 jan - 16 may',
+            amount: 1300,
+            currency: '₹',
+            usage_percentage: 60,
+          },
+          {
+            id: 5,
+            company_name: 'YouTube',
+            renewal_date: '19 dec - 16 may',
+            amount: 1300,
+            currency: '₹',
+            usage_percentage: 30,
+          }
+        ];
+        
+        // Filter out invalid/empty data
+        const validTransactions = dataFromBackend.filter(transaction => 
+          transaction && 
+          transaction.company_name && 
+          transaction.company_name.trim() !== '' && 
+          transaction.amount > 0 &&
+          transaction.renewal_date &&
+          transaction.renewal_date.trim() !== ''
+        );
+        
+        setTransactions(validTransactions.slice(0, 5));
+      } catch (error) {
+        console.log('Error fetching transactions:', error);
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchTransactions();
@@ -95,13 +114,23 @@ const TransactionList = () => {
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
-        <FlatList
-          data={transactions}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}
-        />
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Loading transactions...</Text>
+          </View>
+        ) : transactions.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No transactions found</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={transactions}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          />
+        )}
       </View>
     </View>
   );
@@ -161,6 +190,16 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 12,
     marginTop: 2,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 16,
   },
 });
 

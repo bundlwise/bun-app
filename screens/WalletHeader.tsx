@@ -1,43 +1,17 @@
-/**
- * WalletHeader Component
- * 
- * Backend Integration:
- * - Uses useSmartFetch hook to fetch subscription data from API
- * - Database schema matches PostgreSQL tables:
- *   - users (user_id, user_email, user_name, etc.)
- *   - user_subscriptions_details (company_name, amount, renewal_date, etc.)
- *   - bundlwise_subscriptions_details (bundled subscriptions)
- * 
- * API Endpoints:
- * - GET /api/user-subscriptions - Fetches user's subscription data
- * - GET /api/subscription-usage - Fetches usage statistics
- * 
- * To connect to real backend:
- * 1. Change API_BASE_URL to your actual API URL
- * 2. Ensure API returns data matching UserSubscriptionsResponse interface
- * 3. Update usage calculation logic in transformSubscriptionsToBars function
- */
-
-import React, { useEffect, useRef, useState } from 'react';
-
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
-
-import { useSmartFetch } from '../hooks/useSmartFetch';
-import CharacterCardStack from './CharacterCardStack';
-import SmoothCarouselExample from './SmoothCarouselExample';
-import TransactionList from './TransactionList';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Dimensions,
+  Image,
   Platform,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import Animated, {
@@ -50,171 +24,51 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-
-// Database Types - Matching PostgreSQL Schema
-interface UserSubscriptionDetails {
-  // Required fields for bars
-  company_name: string;
-  amount: number;
-  usage_percentage?: number; // Optional usage data from backend
-  
-  // Optional fields for database compatibility
-  id?: number;
-  user_id?: number;
-  purchase_date?: string;
-  renewal_date?: string;
-  payment_method?: string;
-  currency?: string;
-  renewal_amount?: number;
-  subscription_type?: string;
-  subscription_user_name?: string;
-  subscription_start_date?: string;
-  subscription_end_date?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface BundlwiseSubscriptionDetails {
-  id: number;
-  user_id: number;
-  company_name: string;
-  purchase_date: string;
-  renewal_date?: string;
-  payment_method?: string;
-  amount: number;
-  currency: string;
-  renewal_amount?: number;
-  subscription_type: string;
-  subscription_user_name?: string;
-  subscription_start_date: string;
-  subscription_end_date?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface UserSubscriptionsResponse {
-  individual_subscriptions: UserSubscriptionDetails[];
-  bundled_subscription?: BundlwiseSubscriptionDetails;
-  total_spent: number;
-  currency: string;
-}
-
-// API Configuration
-const API_BASE_URL = 'https://your-api.com'; // Change this to your actual API URL
-const API_ENDPOINTS = {
-  userSubscriptions: `${API_BASE_URL}/api/user-subscriptions`,
-  subscriptionUsage: `${API_BASE_URL}/api/subscription-usage`,
-};
-
-// Dummy data - ONLY what's actually used for bars
-const DUMMY_SUBSCRIPTIONS: UserSubscriptionsResponse = {
-  individual_subscriptions: [
-    {
-      company_name: "Netflix",
-      amount: 1499.00,
-      usage_percentage: 75
-    },
-    {
-      company_name: "Spotify", 
-      amount: 1199.00,
-      usage_percentage: 60
-    },
-    {
-      company_name: "Adobe Creative Cloud",
-      amount: 2499.00,
-      usage_percentage: 85
-    },
-    {
-      company_name: "GitHub Pro",
-      amount: 799.00,
-      usage_percentage: 45
-    }
-  ],
-  total_spent: 5996.00,
-  currency: "INR"
-};
-
-// Utility function to transform database data to UI format
-const transformSubscriptionsToBars = (subscriptions: UserSubscriptionsResponse): BarItem[] => {
-  const colors = ['#FF6464', '#6464FF', '#33FF99', '#FFB366', '#FF66B2', '#66FFB3'];
-  
-  // Only show subscriptions that exist in database (filter out empty/null entries)
-  const validSubscriptions = subscriptions.individual_subscriptions.filter(sub => 
-    sub && 
-    sub.company_name && 
-    sub.company_name.trim() !== '' && 
-    sub.amount > 0
-  );
-  
-  return validSubscriptions.map((sub, index) => ({
-    color: colors[index % colors.length],
-    label: sub.company_name,
-    width: 80 + (index * 10), // Dynamic width based on index
-    fontSize: 12,
-    marginRight: 20,
-    marginTop: 0,
-    align: 'center' as const,
-    usage: sub.usage_percentage || undefined, // Only show usage if backend provides it
-    shiftX: 0,
-    company_name: sub.company_name,
-    amount: sub.amount,
-    currency: sub.currency
-  }));
-};
-
-// Animated Number Component
-const AnimatedAmount = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
-  const [displayValue, setDisplayValue] = useState('₹0');
-  const animatedValue = useSharedValue(0);
-  
-  useEffect(() => {
-    const finalValue = parseInt(value.replace(/[^\d]/g, ''), 10);
-    
-    // Reset to 0
-    setDisplayValue('₹0');
-    animatedValue.value = 0;
-    
-    // Start smooth animation
-    animatedValue.value = withTiming(finalValue, {
-      duration: duration,
-    });
-    
-    // Update display value during animation
-    const updateInterval = setInterval(() => {
-      const currentValue = Math.floor(animatedValue.value);
-      
-      // Add shuffling effect during first 80% of animation
-      if (currentValue < finalValue * 0.8) {
-        const shuffleValue = currentValue + Math.floor(Math.random() * 100);
-        setDisplayValue(`₹${shuffleValue.toLocaleString()}`);
-      } else {
-        setDisplayValue(`₹${currentValue.toLocaleString()}`);
-      }
-    }, 50); // Update every 50ms for smooth animation
-    
-    // Cleanup
-    setTimeout(() => {
-      clearInterval(updateInterval);
-      setDisplayValue(`₹${finalValue.toLocaleString()}`);
-    }, duration);
-    
-    return () => clearInterval(updateInterval);
-  }, [value, duration]);
-
-  return (
-    <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit={true}>
-      {displayValue}
-    </Text>
-  );
-};
+import { useSmartFetch } from '../hooks/useSmartFetch';
+import CardStack from './CharacterCardStack';
+import SmoothCarouselExample from './SmoothCarouselExample';
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-// Android-specific adjustments
 const isAndroid = Platform.OS === 'android';
-const centerOffset = isAndroid ? screenWidth / 2 - 20 : screenWidth / 2; // Adjust for Android padding
-const barSpacing = isAndroid ? 8 : 20; // Slightly tighter spacing on Android
+
+// Database Types - Only needed fields
+interface UserSubscriptionDetails {
+  company_name: string; // App name/label from database
+  amount: number; // Price/amount from database
+}
+
+// Dummy data for testing
+const DUMMY_SUBSCRIPTIONS: UserSubscriptionDetails[] = [
+  { company_name: "Netflix", amount: 1499.00 },
+  { company_name: "Spotify", amount: 1199.00 },
+  { company_name: "Adobe Creative Cloud", amount: 2499.00 },
+  { company_name: "GitHub Pro", amount: 799.00 }
+];
+
+// Transform database data to UI bars
+const transformSubscriptionsToBars = (subscriptions: UserSubscriptionDetails[]): BarItem[] => {
+  const colors = ['#FF6464', '#6464FF', '#33FF99', '#FFB366', '#FF66B2', '#66FFB3'];
+  
+  return subscriptions.map((sub, index) => {
+    let initialWidth = 80;
+    if (index === 0) { initialWidth = 120; }
+    else if (index === 1) { initialWidth = 100; }
+    else if (index === 2) { initialWidth = 80; }
+    else if (index === 3) { initialWidth = 60; }
+    
+    return {
+      color: colors[index % colors.length],
+      label: sub.company_name, // Database key: company_name → UI key: label
+      width: initialWidth,
+      fontSize: 12,
+      marginRight: 10,
+      marginTop: 0,
+      align: 'center' as const,
+      shiftX: 0
+    };
+  });
+};
 
 export type BarItem = {
   color: string;
@@ -229,8 +83,12 @@ export type BarItem = {
 };
 
 type Props = {
+  walletAddress: string;
+  userName: string;
   balanceAmount: string;
   bars: BarItem[];
+  profileIcons?: (string | null)[];
+
 };
 
 const VerticalTicksRow = () => (
@@ -241,7 +99,47 @@ const VerticalTicksRow = () => (
   </View>
 );
 
-// Separate component for animated bars
+const AnimatedIcon = ({ 
+  index, 
+  uploadedImage, 
+  iconOffset, 
+  iconOpacity, 
+  onPress 
+}: {
+  index: number;
+  uploadedImage: string | null;
+  iconOffset: Animated.SharedValue<number>;
+  iconOpacity: Animated.SharedValue<number>;
+  onPress: () => void;
+}) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: iconOffset.value }],
+    opacity: iconOpacity.value,
+  }));
+
+  return (
+    <Animated.View style={[animatedStyle, styles.iconContainer]}>
+      <TouchableOpacity onPress={onPress}>
+        <Image
+          source={
+            uploadedImage
+              ? typeof uploadedImage === 'string'
+                ? { uri: uploadedImage }
+                : uploadedImage
+              : require('../assets/images/google.png')
+          }
+          style={styles.walletIcon}
+        />
+        {!uploadedImage && (
+          <View style={styles.uploadOverlay}>
+            <Text style={styles.uploadText}>+</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 const AnimatedBar = ({
   bar,
   visibleIdx,
@@ -251,8 +149,7 @@ const AnimatedBar = ({
   interactionStarted,
   barWidths,
   barMargins,
-  labelsVisible,
-  onPress
+  labelsVisible
 }: {
   bar: BarItem;
   visibleIdx: number;
@@ -263,45 +160,7 @@ const AnimatedBar = ({
   barWidths: Animated.SharedValue<number>[];
   barMargins: Animated.SharedValue<number>[];
   labelsVisible: boolean;
-  onPress: (idx: number) => void;
 }) => {
-  const shiftXStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: [0, 1, 2, 3].includes(originalIdx) ? -9 : 0 }],
-  }));
-
-  const scaleStyle = useAnimatedStyle(() => {
-    const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
-    const center = scrollX.value + screenWidth / 2; // True center of the screen
-    const dist = Math.abs(center - mid);
-    const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
-    const s = 1 + (rawScale - 1) * animationProgress.value;
-    return { transform: [{ scale: s }] };
-  });
-
-  const shadowStyle = useAnimatedStyle(() => {
-    const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
-    const center = scrollX.value + screenWidth / 2; // True center of the screen
-    const dist = Math.abs(center - mid);
-    const opacity = interactionStarted.value
-      ? interpolate(dist, [0, 60, 150], [1, 0, 0], Extrapolate.CLAMP)
-      : 0;
-    return {
-      shadowColor: '#33FF99',
-      shadowOpacity: opacity * 0.4,
-      shadowRadius: opacity * 10,
-      elevation: isAndroid ? opacity * 8 : opacity * 10, // Android elevation
-    };
-  });
-
-  const labelScaleStyle = useAnimatedStyle(() => {
-    const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
-    const center = scrollX.value + screenWidth / 2; // True center of the screen
-    const dist = Math.abs(center - mid);
-    const rawScale = interpolate(dist, [0, 80, 200], [1.5, 0.85, 0.6], Extrapolate.CLAMP);
-    const s = 1 + (rawScale - 1) * animationProgress.value;
-    return { transform: [{ scale: s }] };
-  });
-
   const widthStyle = useAnimatedStyle(() => ({
     width: barWidths[originalIdx].value,
   }));
@@ -310,181 +169,254 @@ const AnimatedBar = ({
     marginRight: barMargins[originalIdx].value,
   }));
 
-  const usageStyle = useAnimatedStyle(() => {
-    const mid = visibleIdx * (bar.width + barMargins[originalIdx].value) + barWidths[originalIdx].value / 2;
-    const center = scrollX.value + screenWidth / 2; // True center of the screen
-    const dist = Math.abs(center - mid);
-    const show = interactionStarted.value
-      ? interpolate(dist, [0, 40, 80], [1, 0, 0], Extrapolate.CLAMP)
-      : 0;
-    return { opacity: show };
+  // Center scaling animation based on scroll position
+  const centerScaleStyle = useAnimatedStyle(() => {
+    // Only apply scaling after tap animation completes and interaction is started
+    if (animationProgress.value < 1 || !interactionStarted.value) {
+      return {
+        transform: [{ scale: 1 }],
+      };
+    }
+
+    const barWidth = bar.width;
+    const barSpacing = bar.marginRight || 10;
+    const totalBarWidth = barWidth + barSpacing;
+    
+    // Calculate bar center position
+    const barCenterX = visibleIdx * totalBarWidth + barWidth / 2;
+    const screenCenterX = screenWidth / 2;
+    
+    // Calculate distance from screen center
+    const distanceFromCenter = Math.abs(barCenterX - screenCenterX - scrollX.value);
+    
+    // Simple highlight effect - bars get bigger when at center, smaller when away
+    const scale = interpolate(
+      distanceFromCenter, 
+      [0, 100], 
+      [1.3, 0.7], // At center: 1.3x, away: 0.7x (increased scale down from 0.9 to 0.7)
+      Extrapolate.CLAMP
+    );
+
+    // Calculate the height to keep bar at bottom
+    const barHeight = 28;
+    const scaledHeight = barHeight * scale;
+    const heightDifference = scaledHeight - barHeight;
+    
+    return {
+      transform: [{ scale }], // Just scale without translateY
+    };
   });
 
   return (
     <Animated.View
-      style={[styles.barBox, marginRightStyle, shiftXStyle, { marginTop: bar.marginTop ?? 0 }]}
+      style={[styles.barBox, marginRightStyle, centerScaleStyle, { marginTop: bar.marginTop ?? 0 }]}
     >
-      <TouchableWithoutFeedback onPress={() => onPress(originalIdx)}>
-        <View>
-          {bar.usage != null && (
-            <Animated.View style={[styles.usageTextBox, usageStyle]}>
-              <Text style={styles.usageText}>{bar.usage}% USAGE</Text>
-            </Animated.View>
-          )}
+      <Animated.View style={[styles.barShadowWrapperBase, widthStyle]}>
+        <Animated.View style={[styles.coloredBox, { backgroundColor: bar.color }]} />
+      </Animated.View>
 
-          <Animated.View style={[styles.barShadowWrapperBase, scaleStyle, shadowStyle]}>
-            <Animated.View style={[styles.coloredBox, { backgroundColor: bar.color }, widthStyle]} />
-          </Animated.View>
-        </View>
-      </TouchableWithoutFeedback>
       {labelsVisible && (
-        <Animated.Text style={[
+        <Text style={[
           styles.barLabel,
           { fontSize: bar.fontSize || 12 },
-          { transform: [{ translateX: bar.shiftX ?? 0 }] },
-          labelScaleStyle
+          { transform: [{ translateX: bar.shiftX ?? 0 }] }
         ]}>
           {bar.label}
-        </Animated.Text>
+        </Text>
       )}
     </Animated.View>
   );
 };
 
-const WalletHeader = ({ balanceAmount, bars }: Props) => {
+const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIcons }: Props) => {
   const navigation = useNavigation<any>();
   const animationProgress = useSharedValue(0);
-  const scrollX = useSharedValue(0);
   const interactionStarted = useSharedValue(false);
+  const scrollX = useSharedValue(0);
   
-  // API Integration with useSmartFetch
-  const { data: subscriptionsData, loading, error, refetch } = useSmartFetch<UserSubscriptionsResponse>({
-    url: API_ENDPOINTS.userSubscriptions,
+  // API Integration - shows dummy data initially, then real data when API fetches
+  const { data: subscriptionsData, loading, error } = useSmartFetch<UserSubscriptionDetails[]>({
+    url: 'https://your-api.com/api/user-subscriptions',
     method: 'GET',
-    auto: true // Auto-fetch on component mount
+    auto: false // Disable auto-fetch to avoid console errors with fake URL
   });
 
-  // Use dummy data if API is not available (for development)
-  const currentData = subscriptionsData || DUMMY_SUBSCRIPTIONS;
-  const transformedBars = transformSubscriptionsToBars(currentData);
+  // Use real API data when available, otherwise use dummy data
+  const currentSubscriptions = subscriptionsData || DUMMY_SUBSCRIPTIONS;
   
-  // Calculate total spent only from valid subscriptions
-  const validSubscriptions = currentData.individual_subscriptions.filter((sub: UserSubscriptionDetails) => 
+  // Filter out empty/invalid data - show only valid records
+  const validSubscriptions = currentSubscriptions.filter(sub => 
     sub && 
     sub.company_name && 
     sub.company_name.trim() !== '' && 
     sub.amount > 0
   );
-  // Calculate total on screen from individual amounts
-  const totalSpent = validSubscriptions.reduce((sum: number, sub: UserSubscriptionDetails) => sum + sub.amount, 0);
+  
+  // Calculate total from valid data only
+  const totalSpent = validSubscriptions.reduce((sum, sub) => sum + sub.amount, 0);
 
+  const [animatedAmount, setAnimatedAmount] = useState('₹0');
   const [labelsVisible, setLabelsVisible] = useState(false);
-  const [visibleBars, setVisibleBars] = useState<BarItem[]>(transformedBars);
+  const [visibleBars, setVisibleBars] = useState<BarItem[]>(bars || []);
+  const [uploadedImages, setUploadedImages] = useState<(string | null)[]>(
+    Array(3).fill(null).map((_, i) => profileIcons?.[i] ?? null)
+  );
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [showBars, setShowBars] = useState(false);
 
-  // Update bars when data changes
+  // Smooth number animation when real data fetches
   useEffect(() => {
-    if (currentData) {
-      const newBars = transformSubscriptionsToBars(currentData);
-      setVisibleBars(newBars);
+    if (subscriptionsData) { // Only animate when real API data arrives
+      const finalValue = totalSpent;
+      const duration = 2000; // 2 seconds for smooth animation
+      const frameRate = 60;
+      const totalFrames = Math.round((duration / 1000) * frameRate);
+      let currentFrame = 0;
+
+      const interval = setInterval(() => {
+        const progress = currentFrame / totalFrames;
+        const currentValue = Math.floor(progress * finalValue);
+        setAnimatedAmount(`₹${currentValue.toLocaleString()}`);
+        currentFrame++;
+        if (currentFrame >= totalFrames) {
+          clearInterval(interval);
+          setAnimatedAmount(`₹${finalValue.toLocaleString()}`);
+        }
+      }, 1000 / frameRate);
+
+      return () => clearInterval(interval);
     }
-  }, [currentData]);
+  }, [subscriptionsData, totalSpent]);
 
   const slideStarted = useRef(false);
-  
-  // Store original margins separately instead of modifying bars objects
-  const originalMargins = useRef<number[]>(visibleBars.map(bar => bar.marginRight ?? 20));
-
-  // Update originalMargins when visibleBars changes
-  useEffect(() => {
-    originalMargins.current = visibleBars.map(bar => bar.marginRight ?? 20);
-  }, [visibleBars]);
-  
+  const iconOffset0 = useSharedValue(50);
+  const iconOffset1 = useSharedValue(50);
+  const iconOffset2 = useSharedValue(50);
+  const iconOpacity0 = useSharedValue(0);
+  const iconOpacity1 = useSharedValue(0);
+  const iconOpacity2 = useSharedValue(0);
   const barWidth0 = useSharedValue(0);
   const barWidth1 = useSharedValue(0);
   const barWidth2 = useSharedValue(0);
   const barWidth3 = useSharedValue(0);
   const barWidth4 = useSharedValue(0);
   const barWidth5 = useSharedValue(0);
-  
-  const barMargin0 = useSharedValue(barSpacing);
-  const barMargin1 = useSharedValue(barSpacing);
-  const barMargin2 = useSharedValue(barSpacing);
-  const barMargin3 = useSharedValue(barSpacing);
-  const barMargin4 = useSharedValue(barSpacing);
-  const barMargin5 = useSharedValue(barSpacing);
+  const barMargin0 = useSharedValue(10);
+  const barMargin1 = useSharedValue(10);
+  const barMargin2 = useSharedValue(10);
+  const barMargin3 = useSharedValue(10);
+  const barMargin4 = useSharedValue(10);
+  const barMargin5 = useSharedValue(10);
 
+  const iconOffsets = [iconOffset0, iconOffset1, iconOffset2];
+  const iconOpacities = [iconOpacity0, iconOpacity1, iconOpacity2];
   const barWidths = [barWidth0, barWidth1, barWidth2, barWidth3, barWidth4, barWidth5];
   const barMargins = [barMargin0, barMargin1, barMargin2, barMargin3, barMargin4, barMargin5];
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+  });
 
   const triggerSlideToPosition = () => {
     if (slideStarted.current) return;
     slideStarted.current = true;
 
     setScrollEnabled(true);
-    interactionStarted.value = true; // Enable usage text visibility
 
-    visibleBars.forEach((bar, idx) => {
+    bars.forEach((bar, idx) => {
       barWidths[idx].value = withTiming(bar.width, { duration: 800 });
-      const originalMargin = originalMargins.current[idx]; // Use stored original margin
+      const originalMargin = (bar as any)._originalMargin ?? 10;
       barMargins[idx].value = withTiming(originalMargin, { duration: 800 });
     });
 
-    animationProgress.value = withTiming(1, { duration: 600 });
+    animationProgress.value = withTiming(1, { duration: 600 }, () => {
+      // Enable scroll-based scaling after tap animation completes
+      interactionStarted.value = true;
+    });
   };
 
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    scrollX.value = event.contentOffset.x;
-    animationProgress.value = withTiming(1, { duration: 600 });
-  });
-
   useEffect(() => {
-    visibleBars.forEach((bar, idx) => {
-      const originalWidth = bar.width;
-      const originalMargin = originalMargins.current[idx]; // Use stored original margin
-
-      let distortedWidth = originalWidth;
-      let distortedMargin = barSpacing; // Use Android-adjusted spacing
-
-      if (idx === 0) { distortedWidth = 120; }
-      else if (idx === 1) { distortedWidth = 100; }
-      else if (idx === 2) { distortedWidth = 80; }
-      else if (idx === 3) { distortedWidth = 60; }
-
-      barWidths[idx].value = withDelay(idx * 200, withTiming(distortedWidth, { duration: 800 }));
-      barMargins[idx].value = withDelay(idx * 200, withTiming(distortedMargin, { duration: 800 }));
+    uploadedImages.forEach((_, i) => {
+      const delay = i * 500;
+      iconOffsets[i].value = withDelay(delay, withTiming(0, { duration: 600 }));
+      iconOpacities[i].value = withDelay(delay, withTiming(1, { duration: 600 }));
     });
 
-    setTimeout(() => setLabelsVisible(true), visibleBars.length * 200 + 800);
-  }, [visibleBars]);
+    setTimeout(() => setShowBars(true), 3 * 500 + 500);
+  }, [uploadedImages]);
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (bars && bars.length > 0) {
+      setVisibleBars(bars);
+      
+      bars.forEach((bar, idx) => {
+        const originalWidth = bar.width;
+        const originalMargin = bar.marginRight ?? 10;
 
-  const handleBarPress = (idx: number) => {
-    // Calculate the center position of the tapped bar using current bar widths and margins
-    let offset = 0;
-    for (let i = 0; i < idx; i++) {
-      offset += barWidths[i].value + barMargins[i].value;
+        let distortedWidth = originalWidth;
+        let distortedMargin = originalMargin;
+
+        if (idx === 0) { distortedWidth = 110; distortedMargin = 7; }
+        else if (idx === 1) { distortedWidth = 90; distortedMargin = 6; }
+        else if (idx === 2) { distortedWidth = 70; distortedMargin = 7; }
+        else if (idx === 3) { distortedWidth = 50; distortedMargin = 20; }
+
+        // Set initial values immediately without delay
+        barWidths[idx].value = distortedWidth;
+        barMargins[idx].value = distortedMargin;
+        (bars[idx] as any)._originalMargin = originalMargin;
+      });
+
+      // Show labels immediately
+      setLabelsVisible(true);
     }
-    offset += barWidths[idx].value / 2;
-    
-    // Scroll so that the bar's center is at the screen center
-    const scrollToX = Math.max(0, offset - screenWidth / 2);
-    scrollViewRef.current?.scrollTo({ x: scrollToX, animated: true });
-    
-    // Trigger the animation
-    triggerSlideToPosition();
+  }, [bars]);
+
+  const pickImage = async (index: number) => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload images!');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const newImages = [...uploadedImages];
+        newImages[index] = result.assets[0].uri;
+        setUploadedImages(newImages);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...uploadedImages];
+    newImages[index] = null;
+    setUploadedImages(newImages);
+  };
+
+  const handleIconPress = (index: number) => {
+    if (uploadedImages[index]) {
+      Alert.alert('Image Options', 'What would you like to do?', [
+        { text: 'Change Image', onPress: () => pickImage(index) },
+        { text: 'Remove Image', onPress: () => removeImage(index), style: 'destructive' },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      pickImage(index);
+    }
   };
 
   return (
-    <ScrollView 
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
-
+    <View style={styles.container}>
       {/* Loading Indicator at Top */}
       {loading && (
         <View style={styles.loadingContainer}>
@@ -492,7 +424,7 @@ const WalletHeader = ({ balanceAmount, bars }: Props) => {
         </View>
       )}
 
-      {/* Top Search Bar - Exact same as HomeScreen */}
+      {/* Top Search Bar - Exact same as WalletHeader.tsx */}
       <View style={styles.topBar}>
         <TouchableOpacity>
           <Svg
@@ -524,104 +456,94 @@ const WalletHeader = ({ balanceAmount, bars }: Props) => {
 
       {/* 🔹 Balance & Bars */}
       <View style={styles.balanceSection}>
-        <LinearGradient
-          colors={['#FF6464', '#6464FF', '#33FF99', '#666666']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.gradientBorderWrapper}
-        >
-          <View style={styles.balanceContainer}>
-            <Text style={styles.label}>Total Spent</Text>
-            {loading ? (
-              <Text style={styles.amount}>Loading...</Text>
-            ) : error ? (
-              <Text style={styles.amount}>Error loading data</Text>
-            ) : (
-              <AnimatedAmount value={`${totalSpent.toLocaleString()}`} />
-            )}
+        <Text style={styles.label}>Total Spent</Text>
+        <Text style={styles.amount}>{animatedAmount}</Text>
 
-            <View style={styles.chartWrapper}>
-              {visibleBars.length > 0 ? (
-                <>
-                  {/* Remove TouchableWithoutFeedback from here, move to bar */}
-                  <AnimatedScrollView
-                    ref={scrollViewRef}
-                    horizontal
-                    scrollEnabled={scrollEnabled}
-                    showsHorizontalScrollIndicator={false}
-                    scrollEventThrottle={isAndroid ? 8 : 16} // Lower throttle on Android for better performance
-                    onScroll={scrollHandler}
-                    style={styles.scrollView}
-                    removeClippedSubviews={isAndroid} // Android optimization
-                  >
-                    <View style={styles.barsWrapper}>
-                      {visibleBars.map((bar, visibleIdx) => {
-                        const originalIdx = visibleBars.findIndex(b => b.label === bar.label);
-                        return (
-                          <AnimatedBar
-                            key={bar.label}
-                            bar={bar}
-                            visibleIdx={visibleIdx}
-                            originalIdx={originalIdx}
-                            scrollX={scrollX}
-                            animationProgress={animationProgress}
-                            interactionStarted={interactionStarted}
-                            barWidths={barWidths}
-                            barMargins={barMargins}
-                            labelsVisible={labelsVisible}
-                            onPress={handleBarPress}
-                          />
-                        );
-                      })}
-                    </View>
-                  </AnimatedScrollView>
-                  <View style={styles.ticksWrapper}>
-                    <VerticalTicksRow />
-                  </View>
-                </>
-              ) : (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateText}>No subscriptions found</Text>
+        <View style={styles.chartWrapper}>
+          <AnimatedScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.scrollView}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            scrollEnabled={scrollEnabled} // Only enable scroll after tap
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+          >
+                <View style={styles.barsWrapper}>
+                  {visibleBars.map((bar, visibleIdx) => {
+                    const originalIdx = bars.findIndex(b => b.label === bar.label);
+                    return (
+                      <TouchableOpacity
+                        key={bar.label}
+                        onPress={triggerSlideToPosition}
+                        activeOpacity={0.8}
+                      >
+                        <AnimatedBar
+                          bar={bar}
+                          visibleIdx={visibleIdx}
+                          originalIdx={originalIdx}
+                          scrollX={scrollX}
+                          animationProgress={animationProgress}
+                          interactionStarted={interactionStarted}
+                          barWidths={barWidths}
+                          barMargins={barMargins}
+                          labelsVisible={labelsVisible}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
-              )}
+              </AnimatedScrollView>
             </View>
-          </View>
-        </LinearGradient>
+
+        <View style={styles.ticksWrapper}>
+          <VerticalTicksRow />
+        </View>
       </View>
-      
-      {/* Carousel Section */}
-      {/* <View style={styles.carouselSection}>
+
+      {/* Character Card Stack */}
+      <View style={styles.cardStackContainer}>
+        <CardStack />
+      </View>
+
+      {/* Smooth Carousel Example */}
+      <View style={styles.carouselContainer}>
         <SmoothCarouselExample />
-      </View> */}
-      <View style={styles.cardStackSection}>
-        <CharacterCardStack />
       </View>
-      <View style={styles.carouselSection}>
-        <SmoothCarouselExample />
-      </View>
-      <View style={styles.transactionSection}>
-        <TransactionList />
-      </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Added to give full height
-    padding: Platform.OS === 'android' ? 16 : 20, // Slightly less padding on Android
-    marginTop: 10, // Add top margin to move content down
-    backgroundColor: '#000',
-    paddingTop: StatusBar.currentHeight ?? 40,
+    backgroundColor: '#0D0D0D',
+    padding: 20,
   },
-  // Top Bar Styles - Exact same as HomeScreen
+  // Loading Indicator Styles
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0D0D0D',
+    paddingVertical: 10,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Top Bar Styles - Exact same as WalletHeader.tsx
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     justifyContent: 'space-between',
     paddingVertical: 12,
-    marginTop: 15,
+    marginTop: -15, // Reduced from 15 to 5 to move up
+    marginLeft: -20, // Added negative margin to move left
   },
   searchContainer: {
     flexDirection: 'row',
@@ -654,38 +576,57 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  balanceSection: { marginTop: 20 },
-  balanceContainer: {
-    backgroundColor: '#0a0a0a',
-    borderRadius: 17,
-    padding: 20,
-    paddingBottom: 5, // Significantly reduced bottom padding to decrease height
-    width: '100%',
+  walletIcons: { flexDirection: 'row' },
+  walletIcon: { width: 24, height: 24, marginRight: -8, borderRadius: 12 },
+  iconContainer: { position: 'relative' },
+  uploadOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  uploadText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+  walletAddress: { color: '#aaa', marginLeft: 10, marginRight: 'auto' },
+  profileBtn: {
+    backgroundColor: '#f33',
+    width: 30, height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileInitial: { color: '#fff', fontWeight: 'bold' },
+  profileName: { color: '#fff', marginLeft: 8 },
+  balanceSection: { marginTop: 10 },
   label: { color: '#FFF', fontSize: 14, fontWeight: '600', marginLeft: 10, opacity: 0.6 },
   amount: {
-    fontSize: Platform.OS === 'android' ? 30 : 32, // Slightly smaller font on Android
+    fontSize: 32,
     color: '#fff',
     fontWeight: 'bold',
     marginBottom: 10,
     alignSelf: 'flex-end',
-    marginRight: 280, // Adjust for Android screen
+    marginRight: 230,
   },
   chartWrapper: { 
     position: 'relative', 
-    paddingBottom: 10, // Reduced from 30 to 10 to decrease container height
-    marginTop: 5, // Reduced from 50 to 20 to move bars up
+    paddingBottom: 10,
+    marginTop: -50, // Added margin-top to move bars below the amount
     overflow: 'visible' 
   },
   scrollView: { marginTop: 16, overflow: 'visible' },
   barsWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    flexWrap: 'nowrap',
-    paddingHorizontal: Platform.OS === 'android' ? -10: -5, // Less padding on Android
-    overflow: 'visible',
+    paddingHorizontal: 0,
   },
-  barBox: { position: 'relative', alignItems: 'center', marginBottom: 10, minHeight: 140, overflow: 'visible' },
+  barBox: { 
+    position: 'relative', 
+    alignItems: 'center', 
+    marginBottom: 10, 
+    minHeight: 140, 
+    overflow: 'visible',
+    justifyContent: 'flex-end' // Align bars to bottom
+  },
   barShadowWrapperBase: { backgroundColor: '#111', borderRadius: 8, height: 28, justifyContent: 'center' },
   coloredBox: { height: 28, borderRadius: 8 },
   barLabel: { color: '#aaa', marginTop: 42, textAlign: 'center' },
@@ -705,99 +646,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
   },
-  ticksWrapper: { position: 'absolute', bottom: 100, left: 0, right: 0 }, // Moved ticks down by reducing bottom from 120 to 100
+  ticksWrapper: { 
+    position: 'absolute', 
+    top: 133, // Moved down from 140 to 160 to create more space above labels
+    left: 0, 
+    right: 0 
+  },
   ticksContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
   tick: { width: 1, height: 10, backgroundColor: '#333' },
-  gradientBorderWrapper: {
-    borderRadius: 20,
-    padding: 1,
-    marginHorizontal: -5,
-    width: '106%',
-    alignSelf: 'center',
-  },
-  carouselSection: {
-    marginTop: 40, // Increased from 20 to 40 to give more space for carousel
-    flex: 1, // Added to take remaining space
-  },
-  cardStackSection: {
-    marginTop: 40, // Increased from 20 to 40 to give more space for carousel
-    flex: 1, // Added to take remaining space
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  emptyStateText: {
-    color: '#888',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  loadingText: {
-    color: '#33FF99',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  transactionSection: {
+  cardStackContainer: {
     marginTop: 20,
+    marginBottom: 20,
+  },
+  carouselContainer: {
+    marginBottom: 20,
   },
 });
 
-export default WalletHeader;
-/*
- * Usage Example:
- * 
- * // Before (with static props):
- * <WalletHeader 
- *   balanceAmount="₹12,894" 
- *   bars={staticBars} 
- * />
- * 
- * // After (with backend integration):
- * <WalletHeader 
- *   balanceAmount="" // Not used anymore, data comes from API
- *   bars={[]} // Not used anymore, data comes from API
- * />
- * 
- * The component now automatically:
- * 1. Fetches data from API using useSmartFetch
- * 2. Transforms database records to UI bars
- * 3. Shows loading/error states
- * 4. Updates when API data changes
- * 
- * Database Schema Mapping:
- * - company_name → bar.label
- * - amount → bar.amount
- * - currency → bar.currency
- * - usage_percentage → bar.usage (from separate API call)
- * 
- * API Response Expected Format:
- * {
- *   "individual_subscriptions": [
- *     {
- *       "id": 1,
- *       "user_id": 1,
- *       "company_name": "Netflix",
- *       "amount": 1499.00,
- *       "currency": "INR",
- *       "renewal_date": "2024-12-15",
- *       ...
- *     }
- *   ],
- *   "bundled_subscription": { ... },
- *   "total_spent": 12894.00,
- *   "currency": "INR"
- * }
- */
+export default WalletHeader; 

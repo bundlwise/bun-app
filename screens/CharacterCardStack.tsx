@@ -1,4 +1,3 @@
-import { useSmartFetch } from '../hooks/useSmartFetch';
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,6 +9,7 @@ import {
   Text,
   View
 } from 'react-native';
+import { useSmartFetch } from '../hooks/useSmartFetch';
 
 const { width, height } = Dimensions.get('window');
 
@@ -181,9 +181,17 @@ const CardStack = () => {
     });
   };
 
-  // Transform backend data to card format
+  // Transform subscriptions to card data with filtering
   const transformToCardData = (subscriptions: SubscriptionData[]): CardData[] => {
-    return subscriptions.map((sub, index) => {
+    // Filter out invalid/empty data
+    const validSubscriptions = subscriptions.filter(sub => 
+      sub && 
+      sub.company_name && 
+      sub.company_name.trim() !== '' && 
+      sub.amount > 0
+    );
+    
+    return validSubscriptions.map((sub, index) => {
       const usagePercent = sub.usage_percentage;
       
       return {
