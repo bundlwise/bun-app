@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import WalletHeader, { BarItem } from './WalletHeader';
 
@@ -66,13 +66,19 @@ export default function WalletScreen() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" />
         
-        <WalletHeader
-          walletAddress={backendData.walletAddress}
-          userName={backendData.userName}
-          balanceAmount={backendData.balanceAmount}
-          bars={bars}
-          profileIcons={backendData.profileIcons} 
-        />
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <WalletHeader
+            walletAddress={backendData.walletAddress}
+            userName={backendData.userName}
+            balanceAmount={backendData.balanceAmount}
+            bars={bars}
+            profileIcons={backendData.profileIcons} 
+          />
+        </ScrollView>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -82,5 +88,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 50,
+    paddingTop: 10, // Added top padding to move UI down
   },
 });

@@ -58,13 +58,13 @@ const transformSubscriptionsToBars = (subscriptions: UserSubscriptionDetails[]):
     else if (index === 3) { initialWidth = 60; }
     
     return {
-      color: colors[index % colors.length],
+    color: colors[index % colors.length],
       label: sub.company_name, // Database key: company_name → UI key: label
       width: initialWidth,
-      fontSize: 12,
+    fontSize: 12,
       marginRight: 10,
-      marginTop: 0,
-      align: 'center' as const,
+    marginTop: 0,
+    align: 'center' as const,
       shiftX: 0
     };
   });
@@ -126,7 +126,7 @@ const AnimatedIcon = ({
               ? typeof uploadedImage === 'string'
                 ? { uri: uploadedImage }
                 : uploadedImage
-              : require('../assets/images/google.png')
+              : require('../assets/google.png')
           }
           style={styles.walletIcon}
         />
@@ -213,7 +213,7 @@ const AnimatedBar = ({
     >
       <Animated.View style={[styles.barShadowWrapperBase, widthStyle]}>
         <Animated.View style={[styles.coloredBox, { backgroundColor: bar.color }]} />
-      </Animated.View>
+            </Animated.View>
 
       {labelsVisible && (
         <Text style={[
@@ -229,7 +229,7 @@ const AnimatedBar = ({
 };
 
 const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIcons }: Props) => {
-  const navigation = useNavigation<any>();
+  // const navigation = useNavigation<any>();
   const animationProgress = useSharedValue(0);
   const interactionStarted = useSharedValue(false);
   const scrollX = useSharedValue(0);
@@ -281,7 +281,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
         if (currentFrame >= totalFrames) {
           clearInterval(interval);
           setAnimatedAmount(`₹${finalValue.toLocaleString()}`);
-        }
+    }
       }, 1000 / frameRate);
 
       return () => clearInterval(interval);
@@ -340,7 +340,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
       const delay = i * 500;
       iconOffsets[i].value = withDelay(delay, withTiming(0, { duration: 600 }));
       iconOpacities[i].value = withDelay(delay, withTiming(1, { duration: 600 }));
-    });
+  });
 
     setTimeout(() => setShowBars(true), 3 * 500 + 500);
   }, [uploadedImages]);
@@ -350,10 +350,10 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
       setVisibleBars(bars);
       
       bars.forEach((bar, idx) => {
-        const originalWidth = bar.width;
+      const originalWidth = bar.width;
         const originalMargin = bar.marginRight ?? 10;
 
-        let distortedWidth = originalWidth;
+      let distortedWidth = originalWidth;
         let distortedMargin = originalMargin;
 
         if (idx === 0) { distortedWidth = 110; distortedMargin = 7; }
@@ -365,7 +365,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
         barWidths[idx].value = distortedWidth;
         barMargins[idx].value = distortedMargin;
         (bars[idx] as any)._originalMargin = originalMargin;
-      });
+    });
 
       // Show labels immediately
       setLabelsVisible(true);
@@ -456,51 +456,51 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
 
       {/* 🔹 Balance & Bars */}
       <View style={styles.balanceSection}>
-        <Text style={styles.label}>Total Spent</Text>
+            <Text style={styles.label}>Total Spent</Text>
         <Text style={styles.amount}>{animatedAmount}</Text>
 
-        <View style={styles.chartWrapper}>
-          <AnimatedScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
+            <View style={styles.chartWrapper}>
+                  <AnimatedScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
             style={styles.scrollView}
             contentContainerStyle={{ paddingHorizontal: 10 }}
             scrollEnabled={scrollEnabled} // Only enable scroll after tap
-            onScroll={scrollHandler}
+                    onScroll={scrollHandler}
             scrollEventThrottle={16}
-          >
-                <View style={styles.barsWrapper}>
-                  {visibleBars.map((bar, visibleIdx) => {
+                  >
+                    <View style={styles.barsWrapper}>
+                      {visibleBars.map((bar, visibleIdx) => {
                     const originalIdx = bars.findIndex(b => b.label === bar.label);
-                    return (
+                        return (
                       <TouchableOpacity
                         key={bar.label}
                         onPress={triggerSlideToPosition}
                         activeOpacity={0.8}
                       >
-                        <AnimatedBar
-                          bar={bar}
-                          visibleIdx={visibleIdx}
-                          originalIdx={originalIdx}
-                          scrollX={scrollX}
-                          animationProgress={animationProgress}
-                          interactionStarted={interactionStarted}
-                          barWidths={barWidths}
-                          barMargins={barMargins}
-                          labelsVisible={labelsVisible}
-                        />
+                          <AnimatedBar
+                            bar={bar}
+                            visibleIdx={visibleIdx}
+                            originalIdx={originalIdx}
+                            scrollX={scrollX}
+                            animationProgress={animationProgress}
+                            interactionStarted={interactionStarted}
+                            barWidths={barWidths}
+                            barMargins={barMargins}
+                            labelsVisible={labelsVisible}
+                          />
                       </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </AnimatedScrollView>
+                        );
+                      })}
+                    </View>
+                  </AnimatedScrollView>
             </View>
 
-        <View style={styles.ticksWrapper}>
-          <VerticalTicksRow />
-        </View>
+                  <View style={styles.ticksWrapper}>
+                    <VerticalTicksRow />
+                  </View>
       </View>
-
+      
       {/* Character Card Stack */}
       <View style={styles.cardStackContainer}>
         <CardStack />
@@ -510,7 +510,7 @@ const WalletHeader = ({ walletAddress, userName, balanceAmount, bars, profileIco
       <View style={styles.carouselContainer}>
         <SmoothCarouselExample />
       </View>
-    </View>
+      </View>
   );
 };
 
@@ -663,4 +663,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WalletHeader; 
+export default WalletHeader;

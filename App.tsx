@@ -1,12 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import WalletHeader from './screens/WalletHeader';
+import FinancialOverviewScreen from './screens/FinancialOverviewScreen';
 
 export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <WalletHeader balanceAmount="" bars={[]} />
+      <FinancialOverviewScreen />
     </View>
   );
 }
