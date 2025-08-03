@@ -216,22 +216,93 @@ const FinancialOverviewScreen = () => {
       return path;
     };
 
-    // Find closest point to ball position
-    const findClosestPoint = (x: number) => {
-      let closest = dataPoints[0];
-      let minDistance = Math.abs(x - closest.x);
-      
-      // For monthly view, use all points (W1, W2, W3, W4)
-      if (selectedTimeFilter === '1 Month') {
-        for (let point of dataPoints) {
-          const distance = Math.abs(x - point.x);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closest = point;
+    // Find smooth position for weekly ball sliding
+    const findSmoothPosition = (x: number) => {
+      // For weekly, monthly, quarterly, and 6 month views - smooth sliding
+      if (selectedTimeFilter === '1 Week' || selectedTimeFilter === '1 Month' || selectedTimeFilter === '3 Month' || selectedTimeFilter === '6 Month') {
+        const minX = dataPoints[0].x;
+        const maxX = dataPoints[dataPoints.length - 1].x;
+        const clampedX = Math.max(minX, Math.min(maxX, x));
+        
+        // Find the two data points that x lies between
+        let leftPoint = dataPoints[0];
+        let rightPoint = dataPoints[0];
+        let segmentIndex = 0;
+        
+        for (let i = 0; i < dataPoints.length - 1; i++) {
+          if (clampedX >= dataPoints[i].x && clampedX <= dataPoints[i + 1].x) {
+            leftPoint = dataPoints[i];
+            rightPoint = dataPoints[i + 1];
+            segmentIndex = i;
+            break;
           }
         }
+        
+        // Calculate interpolation factor (0 to 1)
+        const totalDistance = rightPoint.x - leftPoint.x;
+        const currentDistance = clampedX - leftPoint.x;
+        let t = totalDistance > 0 ? currentDistance / totalDistance : 0;
+        
+        // Use the exact same curve logic as the graph path
+        let y;
+        if (selectedTimeFilter === '1 Month') {
+          // Monthly curve logic (sharper critical points)
+          const controlX = leftPoint.x + (rightPoint.x - leftPoint.x) * 0.7;
+          const controlY = leftPoint.y;
+          
+          if (rightPoint.critical) {
+            const sharpControlY = leftPoint.y + (rightPoint.y - leftPoint.y) * 0.1;
+            y = (1 - t) * (1 - t) * leftPoint.y + 2 * (1 - t) * t * sharpControlY + t * t * rightPoint.y;
+          } else {
+            y = (1 - t) * (1 - t) * leftPoint.y + 2 * (1 - t) * t * controlY + t * t * rightPoint.y;
+          }
+        } else if (selectedTimeFilter === '3 Month') {
+          // Quarterly curve logic (more dramatic) - EXACT same as graph
+          const controlX = leftPoint.x + (rightPoint.x - leftPoint.x) * 0.8;
+          const sharpControlY = leftPoint.y + (rightPoint.y - leftPoint.y) * 0.05;
+          y = (1 - t) * (1 - t) * leftPoint.y + 2 * (1 - t) * t * sharpControlY + t * t * rightPoint.y;
+        } else if (selectedTimeFilter === '6 Month') {
+          // 6 Month curve logic - EXACT same as graph
+          const controlX = leftPoint.x + (rightPoint.x - leftPoint.x) * 0.8;
+          const sharpControlY = leftPoint.y + (rightPoint.y - leftPoint.y) * 0.05;
+          y = (1 - t) * (1 - t) * leftPoint.y + 2 * (1 - t) * t * sharpControlY + t * t * rightPoint.y;
+        } else {
+          // Weekly curve logic
+          const controlX = leftPoint.x + (rightPoint.x - leftPoint.x) * 0.6;
+          const controlY = leftPoint.y;
+          y = (1 - t) * (1 - t) * leftPoint.y + 2 * (1 - t) * t * controlY + t * t * rightPoint.y;
+        }
+        
+        // Calculate interpolated usage with smooth transition
+        const usage = Math.round(leftPoint.usage + (rightPoint.usage - leftPoint.usage) * t);
+        
+        // For 3 month and 6 month views, use the closer point for day/month info
+        let day, month;
+        if (selectedTimeFilter === '3 Month' || selectedTimeFilter === '6 Month') {
+          if (t < 0.5) {
+            day = (leftPoint as any).day;
+            month = (leftPoint as any).month;
+          } else {
+            day = (rightPoint as any).day;
+            month = (rightPoint as any).month;
+          }
+        } else {
+          day = (leftPoint as any).day;
+          month = (leftPoint as any).month;
+        }
+        
+        return {
+          x: clampedX,
+          y: y,
+          usage: usage,
+          day: day,
+          month: month
+        };
       } else {
-        // For weekly view, use all points (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+        // For other views, use closest point (existing behavior)
+        let closest = dataPoints[0];
+        let minDistance = Math.abs(x - closest.x);
+        
         for (let point of dataPoints) {
           const distance = Math.abs(x - point.x);
           if (distance < minDistance) {
@@ -239,57 +310,65 @@ const FinancialOverviewScreen = () => {
             closest = point;
           }
         }
+        return closest;
       }
-      return closest;
     };
 
-    // PanResponder for weekly ball movement
+    // PanResponder for weekly ball movement with smooth finger tracking
     const weeklyPanResponder = useRef(
       PanResponder.create({
         onStartShouldSetPanResponder: () => selectedTimeFilter === '1 Week',
         onMoveShouldSetPanResponder: () => selectedTimeFilter === '1 Week',
+        onPanResponderTerminationRequest: () => false, // Prevent interruption
         onPanResponderGrant: (evt) => {
           const { locationX } = evt.nativeEvent;
           console.log('Weekly ball touched at:', locationX);
-          const closestPoint = findClosestPoint(locationX);
-          console.log('Closest point:', closestPoint);
-          setWeeklyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-          setWeeklyInfo(`${(closestPoint as any).day} - ${closestPoint.usage}%`);
+          const smoothPoint = findSmoothPosition(locationX);
+          console.log('Smooth point:', smoothPoint);
+          setWeeklyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+          
+          // Create situation label based on usage
+          let situation = '';
+          if (smoothPoint.usage < 30) {
+            situation = 'Low';
+          } else if (smoothPoint.usage < 60) {
+            situation = 'Growth';
+          } else {
+            situation = 'Peak';
+          }
+          setWeeklyInfo(`${(smoothPoint as any).day} ${smoothPoint.usage}%\n${situation}`);
         },
         onPanResponderMove: (evt) => {
           const { locationX } = evt.nativeEvent;
-          if (locationX >= 0 && locationX <= chartWidth) {
-            const closestPoint = findClosestPoint(locationX);
-            setWeeklyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-            setWeeklyInfo(`${(closestPoint as any).day} - ${closestPoint.usage}%`);
-          }
+          // Continuous finger tracking with very smooth movement
+          const smoothPoint = findSmoothPosition(locationX);
+          
+          // Use requestAnimationFrame for smoother updates
+          requestAnimationFrame(() => {
+            setWeeklyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+            
+            // Create situation label based on usage
+            let situation = '';
+            if (smoothPoint.usage < 30) {
+              situation = 'Low';
+            } else if (smoothPoint.usage < 60) {
+              situation = 'Growth';
+            } else {
+              situation = 'Peak';
+            }
+            setWeeklyInfo(`${(smoothPoint as any).day} ${smoothPoint.usage}%\n${situation}`);
+          });
+        },
+        onPanResponderRelease: (evt) => {
+          // Optional: Add release animation or final positioning
+          const { locationX } = evt.nativeEvent;
+          const smoothPoint = findSmoothPosition(locationX);
+          setWeeklyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
         },
       })
     ).current;
 
-    // PanResponder for monthly ball movement
-    const monthlyPanResponder = useRef(
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => selectedTimeFilter === '1 Month',
-        onMoveShouldSetPanResponder: () => selectedTimeFilter === '1 Month',
-        onPanResponderGrant: (evt) => {
-          const { locationX } = evt.nativeEvent;
-          console.log('Monthly ball touched at:', locationX);
-          const closestPoint = findClosestPoint(locationX);
-          console.log('Closest point:', closestPoint);
-          setMonthlyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-          setMonthlyInfo(`Week ${(closestPoint as any).day.slice(1)} - ${closestPoint.usage}%`);
-        },
-        onPanResponderMove: (evt) => {
-          const { locationX } = evt.nativeEvent;
-          if (locationX >= 0 && locationX <= chartWidth) {
-            const closestPoint = findClosestPoint(locationX);
-            setMonthlyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-            setMonthlyInfo(`Week ${(closestPoint as any).day.slice(1)} - ${closestPoint.usage}%`);
-          }
-        },
-      })
-    ).current;
+
 
     return (
       <View style={styles.graphContainer}>
@@ -466,106 +545,133 @@ const FinancialOverviewScreen = () => {
 
           </Svg>
           
-          {/* Touch overlay for weekly ball movement */}
+          {/* Touch overlay for weekly ball movement with PanResponder */}
           {selectedTimeFilter === '1 Week' && (
-            <TouchableOpacity 
+            <View 
               style={styles.touchOverlay}
-              onPress={(evt) => {
-                const { locationX } = evt.nativeEvent;
-                console.log('Weekly touch at:', locationX);
-                const closestPoint = findClosestPoint(locationX);
-                console.log('Closest point:', closestPoint);
-                setWeeklyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-                // Create situation label based on usage
-                let situation = '';
-                if (closestPoint.usage < 30) {
-                  situation = 'Low';
-                } else if (closestPoint.usage < 60) {
-                  situation = 'Growth';
-                } else {
-                  situation = 'Peak';
-                }
-                setWeeklyInfo(`${(closestPoint as any).day} ${closestPoint.usage}%\n${situation}`);
-              }}
+              {...weeklyPanResponder.panHandlers}
             />
           )}
           
           {/* Touch overlay for monthly ball movement */}
           {selectedTimeFilter === '1 Month' && (
-            <TouchableOpacity 
+            <View 
               style={styles.touchOverlay}
-              onPress={(evt) => {
+              onTouchStart={(evt) => {
                 const { locationX } = evt.nativeEvent;
-                console.log('Monthly touch at:', locationX);
-                const closestPoint = findClosestPoint(locationX);
-                console.log('Closest point:', closestPoint);
-                setMonthlyBallPosition({ x: closestPoint.x, y: closestPoint.y });
-                // Create situation label based on usage
+                const smoothPoint = findSmoothPosition(locationX);
+                setMonthlyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+                
                 let situation = '';
-                if (closestPoint.usage < 30) {
+                if (smoothPoint.usage < 30) {
                   situation = 'Low';
-                } else if (closestPoint.usage < 60) {
+                } else if (smoothPoint.usage < 60) {
                   situation = 'Growth';
                 } else {
                   situation = 'Peak';
                 }
-                setMonthlyInfo(`${(closestPoint as any).day} ${closestPoint.usage}%\n${situation}`);
+                setMonthlyInfo(`W${(smoothPoint as any).day.slice(1)} ${smoothPoint.usage}%\n${situation}`);
+              }}
+              onTouchMove={(evt) => {
+                const { locationX } = evt.nativeEvent;
+                const smoothPoint = findSmoothPosition(locationX);
+                setMonthlyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+                
+                let situation = '';
+                if (smoothPoint.usage < 30) {
+                  situation = 'Low';
+                } else if (smoothPoint.usage < 60) {
+                  situation = 'Growth';
+                } else {
+                  situation = 'Peak';
+                }
+                setMonthlyInfo(`W${(smoothPoint as any).day.slice(1)} ${smoothPoint.usage}%\n${situation}`);
               }}
             />
           )}
           
           {/* Touch overlay for quarterly ball movement */}
           {selectedTimeFilter === '3 Month' && (
-            <TouchableOpacity 
+            <View 
               style={styles.touchOverlay}
-              onPress={(evt) => {
+              onTouchStart={(evt) => {
                 const { locationX } = evt.nativeEvent;
-                console.log('Quarterly touch at:', locationX);
-                const closestPoint = findClosestPoint(locationX);
-                console.log('Closest point:', closestPoint);
-                setQuarterlyBallPosition({ x: closestPoint.x, y: closestPoint.y });
+                const smoothPoint = findSmoothPosition(locationX);
+                setQuarterlyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
                 
-                // Create situation label based on usage
                 let situation = '';
-                if (closestPoint.usage < 30) {
+                if (smoothPoint.usage < 30) {
                   situation = 'Low';
-                } else if (closestPoint.usage < 60) {
+                } else if (smoothPoint.usage < 60) {
                   situation = 'Growth';
                 } else {
                   situation = 'Peak';
                 }
                 
-                const point = closestPoint as any;
+                const point = smoothPoint as any;
                 const monthName = point.month || point.day;
-                const dayCode = selectedTimeFilter === '6 Month' ? (point as any).month : (point as any).day;
-                setQuarterlyInfo(`${monthName} (${dayCode}) - ${closestPoint.usage}% - ${situation}`);
+                const dayCode = point.day || point.month;
+                setQuarterlyInfo(`${monthName} (${dayCode}) - ${smoothPoint.usage}% - ${situation}`);
+              }}
+              onTouchMove={(evt) => {
+                const { locationX } = evt.nativeEvent;
+                const smoothPoint = findSmoothPosition(locationX);
+                setQuarterlyBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+                
+                let situation = '';
+                if (smoothPoint.usage < 30) {
+                  situation = 'Low';
+                } else if (smoothPoint.usage < 60) {
+                  situation = 'Growth';
+                } else {
+                  situation = 'Peak';
+                }
+                
+                const point = smoothPoint as any;
+                const monthName = point.month || point.day;
+                const dayCode = point.day || point.month;
+                setQuarterlyInfo(`${monthName} (${dayCode}) - ${smoothPoint.usage}% - ${situation}`);
               }}
             />
           )}
 
           {/* Touch overlay for 6 Month ball movement */}
           {selectedTimeFilter === '6 Month' && (
-            <TouchableOpacity 
+            <View 
               style={styles.touchOverlay}
-              onPress={(evt) => {
+              onTouchStart={(evt) => {
                 const { locationX } = evt.nativeEvent;
-                console.log('6 Month touch at:', locationX);
-                const closestPoint = findClosestPoint(locationX);
-                console.log('Closest point:', closestPoint);
-                setSixMonthBallPosition({ x: closestPoint.x, y: closestPoint.y });
+                const smoothPoint = findSmoothPosition(locationX);
+                setSixMonthBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
                 
-                // Create situation label based on usage
                 let situation = '';
-                if (closestPoint.usage < 30) {
+                if (smoothPoint.usage < 30) {
                   situation = 'Low';
-                } else if (closestPoint.usage < 60) {
+                } else if (smoothPoint.usage < 60) {
                   situation = 'Growth';
                 } else {
                   situation = 'Peak';
                 }
                 
-                const point = closestPoint as any;
-                setSixMonthInfo(`${point.month} ${closestPoint.usage}%\n${situation}`);
+                const point = smoothPoint as any;
+                setSixMonthInfo(`${point.month} ${smoothPoint.usage}%\n${situation}`);
+              }}
+              onTouchMove={(evt) => {
+                const { locationX } = evt.nativeEvent;
+                const smoothPoint = findSmoothPosition(locationX);
+                setSixMonthBallPosition({ x: smoothPoint.x, y: smoothPoint.y });
+                
+                let situation = '';
+                if (smoothPoint.usage < 30) {
+                  situation = 'Low';
+                } else if (smoothPoint.usage < 60) {
+                  situation = 'Growth';
+                } else {
+                  situation = 'Peak';
+                }
+                
+                const point = smoothPoint as any;
+                setSixMonthInfo(`${point.month} ${smoothPoint.usage}%\n${situation}`);
               }}
             />
           )}
@@ -1026,7 +1132,7 @@ const styles = StyleSheet.create({
        left: 0,
        right: 0,
        bottom: 0,
-       backgroundColor: 'rgba(255,255,255,0.1)',
+       backgroundColor: 'transparent',
      },
      infoIndicator: {
        position: 'absolute',
