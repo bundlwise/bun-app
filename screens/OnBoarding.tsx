@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, ImageBackground } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import BundlwiseLogo from '../assets/bundlwise-logo.svg';
 import RightArrow from '../assets/arrow-right.svg';
 import Button from '../components/Button';
-const OnboardingScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+type OnboardingScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
+};
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    console.log('Login attempted with:', { email, password });
+const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
+  const handleGetStarted = () => {
+    navigation.navigate('Login');
   };
 
   return (
@@ -22,11 +24,9 @@ const OnboardingScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <Button
             title="Get Started"
-            onPress={handleLogin}
-            height={52}
+            onPress={handleGetStarted}
             width="90%"
             backgroundColor="#ffffffff"
-            borderRadius={16}
             rightIcon={<RightArrow width={17} height={17} />}
             textStyle={{ color: '#000000' }}
           />

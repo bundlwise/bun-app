@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View, TextInput } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 import { useEffect } from 'react';
 import * as Font from 'expo-font';
 import { useState } from 'react';
-import OnboardingScreen from './screens/OnBoarding';
+import AppNavigator from './navigation/AppNavigator';
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -52,21 +52,5 @@ export default function App() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  return (
-    <View style={styles.container}>
-      <OnboardingScreen />
-    </View>
-  );
+  return <AppNavigator />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    height: '100%',
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 1)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
