@@ -16,14 +16,19 @@
     "@react-native-google-signin/google-signin": "^15.0.0",
     "expo": "~53.0.20",
     "expo-build-properties": "^0.14.8",
+    "expo-font": "^13.3.2",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.5",
+    "react-native-svg": "15.11.2",
+    "whatwg-url-without-unicode": "^8.0.0-3",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "latest",
     "@types/react": "~19.0.10",
+    "react-native-svg-transformer": "^1.5.1",
     "typescript": "~5.8.3"
   },
   "private": true
