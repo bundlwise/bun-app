@@ -1,18 +1,29 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import Button from "../components/Button";
 import Input from "../components/Input";
 import AppleIcon from "../assets/icons/apple.svg";
 import GoogleIcon from "../assets/icons/google.svg";
 
+type LoginScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
+};
 
-const LoginScreen: React.FC = () => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
     // TODO: Implement login logic
     console.log("Login attempted with:", { email, password });
+  };
+
+  const handleGoogleSignIn = () => {
+    // TODO: Implement actual Google Sign-In logic
+    console.log("Google Sign-In initiated");
+    navigation.navigate('Walkthrough');
   };
 
   return (
@@ -52,7 +63,6 @@ const LoginScreen: React.FC = () => {
             title="Send magic link"
             onPress={handleLogin}
             width="100%"
-            // backgroundColor="#404040"
             backgroundColor="#FFFFFF"
             borderRadius={16}
             textStyle={{ color: "#1B1B1B" }}
@@ -79,7 +89,7 @@ const LoginScreen: React.FC = () => {
         >
           <Button
             title="Continue with Google"
-            onPress={handleLogin}
+            onPress={handleGoogleSignIn}
             width="100%"
             backgroundColor="#FFFFFF"
             borderRadius={16}
