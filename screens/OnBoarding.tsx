@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
   background: {
     width: '100%',
     height: '100%',
+    backgroundColor: "#07080a",
   },
   container: {
     flex: 1,

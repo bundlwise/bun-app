@@ -18,9 +18,11 @@ interface ButtonProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   height?: DimensionValue;
-  width?: DimensionValue;
+  width?: DimensionValue | 'auto';
   backgroundColor?: string;
   borderRadius?: number;
+  borderColor?: string;
+  borderWidth?: number;
   textStyle?: StyleProp<TextStyle>;
   buttonStyle?: StyleProp<ViewStyle>;
   activeOpacity?: number;
@@ -35,20 +37,28 @@ const Button: React.FC<ButtonProps> = ({
   width = "90%",
   backgroundColor = "#ffffff",
   borderRadius = 16,
+  borderColor = 'transparent',
+  borderWidth = 0,
   textStyle,
   buttonStyle,
   activeOpacity = 0.85,
 }) => {
+  const buttonWidthStyle = width === 'auto' 
+    ? styles.autoWidth 
+    : { width };
+
   return (
     <TouchableOpacity
       style={[
         styles.button,
         {
           height,
-          width,
           borderRadius,
           backgroundColor,
+          borderColor,
+          borderWidth,
         },
+        buttonWidthStyle,
         buttonStyle,
       ]}
       activeOpacity={activeOpacity}
@@ -75,6 +85,10 @@ const styles = StyleSheet.create({
     // shadowColor: "#000",
     // shadowOpacity: 0.1,
     // elevation: 3,
+  },
+  autoWidth: {
+    alignSelf: "center",
+    paddingHorizontal: 24,
   },
   contentContainer: {
     flexDirection: "row",

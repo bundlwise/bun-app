@@ -96,16 +96,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             textStyle={{ color: "#000000" }}
             leftIcon={<GoogleIcon width={20} height={20} fill="#000000" />}
           />
-
-          <Button
-            title="Continue with Apple"
-            onPress={handleLogin}
-            width="100%"
-            leftIcon={<AppleIcon width={20} height={20} fill="#fff" />}
-            backgroundColor="#171717"
-            borderRadius={16}
-            textStyle={{ color: "#fff" }}
-          />
         </View>
       </View>
     </SafeAreaView>
@@ -116,7 +106,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#000000",
+    backgroundColor: "#07080a",
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: 62,

@@ -10,7 +10,9 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Login: undefined;
   Walkthrough: undefined;
+  Home: undefined;
 };
+import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,6 +36,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Walkthrough" component={WalkthroughScreen} />
+  <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
