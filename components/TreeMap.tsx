@@ -1,204 +1,209 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Rect, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-interface TreeMapItem {
+export interface TreeMapItem {
   name: string;
-  value: number;
-  color: string;
-  change: string;
+  value: number; // main metric (e.g. cost or usage)
+  color?: string; // optional custom accent
+  change: string; // e.g. "+3.2%" or "-1.2%"
+  meta?: Record<string, any>; // extensibility for future details
 }
 
 interface TreeMapProps {
   data: TreeMapItem[];
   width?: number;
   height?: number;
+  onSelect?: (item: TreeMapItem) => void;
+  selectedName?: string | null;
+  dark?: boolean;
 }
 
-// Randomized treemap layout that still creates a cohesive rectangular box
+// Deterministic squarified treemap layout (simple variant)
 const calculateLayout = (data: TreeMapItem[], containerWidth: number, containerHeight: number) => {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  
-  // Shuffle the data randomly while preserving proportions
-  const shuffledData = [...data].sort(() => Math.random() - 0.5);
-  
-  const layouts: Array<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    item: TreeMapItem;
-  }> = [];
+  const items = [...data].sort((a, b) => b.value - a.value);
+  const total = items.reduce((s, i) => s + i.value, 0) || 1;
 
-  function subdivideRandomly(items: TreeMapItem[], x: number, y: number, width: number, height: number) {
-    if (items.length === 0) return;
-    
-    if (items.length === 1) {
-      layouts.push({
-        x,
-        y,
-        width,
-        height,
-        item: items[0]
-      });
-      return;
-    }
+  const layouts: Array<{ x: number; y: number; width: number; height: number; item: TreeMapItem; }> = [];
 
-    // Calculate total value for this subset
-    const subTotal = items.reduce((sum, item) => sum + item.value, 0);
-    
-    // Randomly decide split direction (with some bias based on aspect ratio)
-    const aspectRatio = width / height;
-    const randomFactor = Math.random();
-    const isVerticalSplit = aspectRatio > 1.2 ? randomFactor > 0.3 : randomFactor > 0.7;
-    
-    // Randomly pick a split point (but keep it reasonable)
-    const splitIndex = Math.floor(Math.random() * (items.length - 1)) + 1;
-    const firstGroup = items.slice(0, splitIndex);
-    const secondGroup = items.slice(splitIndex);
-    
-    const firstTotal = firstGroup.reduce((sum, item) => sum + item.value, 0);
-    const secondTotal = secondGroup.reduce((sum, item) => sum + item.value, 0);
-    const firstRatio = firstTotal / subTotal;
-    
-    if (isVerticalSplit) {
-      // Split vertically
-      const firstWidth = width * firstRatio;
-      subdivideRandomly(firstGroup, x, y, firstWidth, height);
-      subdivideRandomly(secondGroup, x + firstWidth, y, width - firstWidth, height);
-    } else {
-      // Split horizontally
-      const firstHeight = height * firstRatio;
-      subdivideRandomly(firstGroup, x, y, width, firstHeight);
-      subdivideRandomly(secondGroup, x, y + firstHeight, width, height - firstHeight);
-    }
+  function worst(row: TreeMapItem[], w: number): number {
+    const s = row.reduce((sum, r) => sum + r.value, 0) / total * (containerWidth * containerHeight);
+    const maxVal = Math.max(...row.map(r => r.value)) / total * (containerWidth * containerHeight);
+    const minVal = Math.min(...row.map(r => r.value)) / total * (containerWidth * containerHeight);
+    const w2 = w * w;
+    return Math.max((w2 * maxVal) / (s * s), (s * s) / (w2 * minVal));
   }
 
-  // Create random groups but ensure we use all the space
-  if (shuffledData.length <= 2) {
-    subdivideRandomly(shuffledData, 0, 0, containerWidth, containerHeight);
-  } else {
-    // Create 2-4 random groups
-    const numGroups = Math.floor(Math.random() * 3) + 2; // 2-4 groups
-    const groups: TreeMapItem[][] = Array.from({ length: numGroups }, () => []);
-    
-    // Randomly distribute items into groups
-    shuffledData.forEach((item, index) => {
-      const groupIndex = index % numGroups;
-      groups[groupIndex].push(item);
-    });
-    
-    // Filter out empty groups
-    const nonEmptyGroups = groups.filter(group => group.length > 0);
-    
-    // Calculate space allocation for each group
-    const groupTotals = nonEmptyGroups.map(group => 
-      group.reduce((sum, item) => sum + item.value, 0)
-    );
-    const grandTotal = groupTotals.reduce((sum, total) => sum + total, 0);
-    
-    // Randomly decide main split direction
-    const mainVerticalSplit = Math.random() > 0.5;
-    
-    if (mainVerticalSplit) {
-      // Split vertically
-      let currentX = 0;
-      nonEmptyGroups.forEach((group, index) => {
-        const ratio = groupTotals[index] / grandTotal;
-        const groupWidth = containerWidth * ratio;
-        subdivideRandomly(group, currentX, 0, groupWidth, containerHeight);
-        currentX += groupWidth;
-      });
+  let x = 0, y = 0, w = containerWidth, h = containerHeight;
+  let row: TreeMapItem[] = [];
+  let remaining = [...items];
+
+  while (remaining.length > 0) {
+    const item = remaining[0];
+    const newRow = [...row, item];
+    const shortSide = Math.min(w, h);
+    if (row.length === 0 || worst(newRow, shortSide) <= worst(row, shortSide)) {
+      row = newRow;
+      remaining.shift();
     } else {
-      // Split horizontally
-      let currentY = 0;
-      nonEmptyGroups.forEach((group, index) => {
-        const ratio = groupTotals[index] / grandTotal;
-        const groupHeight = containerHeight * ratio;
-        subdivideRandomly(group, 0, currentY, containerWidth, groupHeight);
-        currentY += groupHeight;
+      layoutRow(row, shortSide);
+      row = [];
+    }
+  }
+  if (row.length) layoutRow(row, Math.min(w, h));
+
+  function layoutRow(r: TreeMapItem[], shortSide: number) {
+    const rowTotal = r.reduce((s, i) => s + i.value, 0);
+    const areaFactor = (containerWidth * containerHeight) / total;
+    const rowArea = rowTotal * areaFactor;
+    if (shortSide === w) {
+      // horizontal row
+      const rowHeight = rowArea / w;
+      let curX = x;
+      r.forEach(it => {
+        const itWidth = (it.value * areaFactor) / rowHeight;
+        layouts.push({ x: curX, y, width: itWidth, height: rowHeight, item: it });
+        curX += itWidth;
       });
+      y += rowHeight;
+      h -= rowHeight;
+    } else {
+      // vertical column
+      const colWidth = rowArea / h;
+      let curY = y;
+      r.forEach(it => {
+        const itHeight = (it.value * areaFactor) / colWidth;
+        layouts.push({ x, y: curY, width: colWidth, height: itHeight, item: it });
+        curY += itHeight;
+      });
+      x += colWidth;
+      w -= colWidth;
     }
   }
 
   return layouts;
 };
 
-const TreeMap: React.FC<TreeMapProps> = ({ 
-  data, 
-  width = screenWidth * 0.9, 
-  height = 400 
+const accentPalette = [
+  '#6366f1', // indigo-500
+  '#0ea5e9', // sky-500
+  '#10b981', // emerald-500
+  '#f59e0b', // amber-500
+  '#ec4899', // pink-500
+  '#84cc16', // lime-500
+  '#8b5cf6', // violet-500
+  '#f43f5e', // rose-500
+  '#06b6d4', // cyan-500
+  '#14b8a6'  // teal-500
+];
+
+const TreeMap: React.FC<TreeMapProps> = ({
+  data,
+  width = screenWidth * 0.92,
+  height = 400,
+  onSelect,
+  selectedName,
+  dark = true
 }) => {
-  const [randomSeed, setRandomSeed] = React.useState(0);
-  
-  // Add randomSeed to force recalculation when needed
-  const layouts = React.useMemo(() => {
-    return calculateLayout(data, width, height);
-  }, [data, width, height, randomSeed]);
+  const layouts = React.useMemo(() => calculateLayout(data, width, height), [data, width, height]);
+  const total = React.useMemo(() => data.reduce((s, i) => s + i.value, 0) || 1, [data]);
+
+  const maxValue = React.useMemo(() => Math.max(...data.map(d => d.value), 1), [data]);
+
+  function withAlpha(hex: string, alpha: number) {
+    const h = hex.replace('#','');
+    const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
 
   return (
     <View style={styles.container}>
       <Svg width={width} height={height}>
-        <Defs>
-          {data.map((item, index) => (
-            <LinearGradient
-              key={`gradient-${index}`}
-              id={`gradient-${index}`}
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <Stop offset="0%" stopColor={item.color} stopOpacity="0.9" />
-              <Stop offset="50%" stopColor={item.color} stopOpacity="0.8" />
-              <Stop offset="100%" stopColor={item.color} stopOpacity="0.6" />
-            </LinearGradient>
-          ))}
-        </Defs>
-        
-        {layouts.map((layout, index) => {
+        {layouts.map(layout => {
           const { x, y, width: rectWidth, height: rectHeight, item } = layout;
-          const gradientId = data.findIndex(d => d.name === item.name);
-          
+          const pctNum = (item.value / total) * 100;
+          const pct = pctNum.toFixed(1) + '%';
+          const isSelected = selectedName === item.name;
+          const accent = item.color || accentPalette[data.findIndex(d => d.name === item.name) % accentPalette.length];
+          const intensity = 0.12 + (item.value / maxValue) * 0.28; // 0.12 - 0.40 range
+          const showName = rectWidth > 55 && rectHeight > 38;
+          const showChange = rectWidth > 70 && rectHeight > 54; // space for second line
+          const showMonthly = rectWidth > 90 && rectHeight > 72 && item.meta?.monthly !== undefined;
+          const monthlyVal = item.meta?.monthly;
+          const shareTopRight = rectWidth > 70 && rectHeight > 42;
+          let nameFont = rectWidth > 140 ? 17 : rectWidth > 110 ? 15 : rectWidth > 80 ? 13 : 12;
           return (
-            <React.Fragment key={`rect-${index}`}>
+            <React.Fragment key={item.name}>
               <Rect
                 x={x}
                 y={y}
                 width={rectWidth}
                 height={rectHeight}
-                fill={`url(#gradient-${gradientId})`}
-                stroke="#2c3e50"
-                strokeWidth="1"
-                rx={4}
-                ry={4}
+                fill={'#050607'}
+                stroke={isSelected ? '#ffffff' : '#11171e'}
+                strokeWidth={isSelected ? 2 : 1}
+                rx={6}
+                ry={6}
+                onPress={() => onSelect && onSelect(item)}
               />
-              
-              {/* App/Tool Name */}
-              {rectWidth > 50 && rectHeight > 40 && (
+              <Rect
+                x={x+1}
+                y={y+1}
+                width={rectWidth-2}
+                height={rectHeight-2}
+                fill={withAlpha(accent, intensity)}
+                rx={5}
+                ry={5}
+                pointerEvents="none"
+              />
+              {shareTopRight && (
                 <SvgText
-                  x={x + 8}
-                  y={y + 20}
-                  fontSize={rectWidth > 100 ? "16" : rectWidth > 70 ? "14" : "12"}
-                  fontWeight="600"
-                  fill="#ffffff"
+                  x={x + rectWidth - 8}
+                  y={y + 16}
+                  fontSize={11}
+                  fontWeight="500"
+                  fill="#94a3b8"
+                  textAnchor="end"
                 >
-                  {item.name.length > 10 && rectWidth < 80 ? item.name.substring(0, 7) + '...' : item.name}
+                  {pct}
                 </SvgText>
               )}
-              
-              {/* Change Percentage */}
-              {rectWidth > 50 && rectHeight > 30 && (
+              {showName && (
                 <SvgText
-                  x={x + 8}
-                  y={y + rectHeight - 8}
-                  fontSize={rectWidth > 100 ? "14" : rectWidth > 70 ? "12" : "10"}
+                  x={x + 10}
+                  y={y + 20}
+                  fontSize={nameFont}
+                  fontWeight="600"
+                  fill="#f1f5f9"
+                >
+                  {item.name.length > 16 ? item.name.substring(0, 13) + '…' : item.name}
+                </SvgText>
+              )}
+              {showChange && (
+                <SvgText
+                  x={x + 10}
+                  y={y + 38}
+                  fontSize={12}
                   fontWeight="500"
-                  fill={item.change.startsWith('+') ? "#4ade80" : "#f87171"}
+                  fill={item.change.startsWith('+') ? '#22c55e' : '#ef4444'}
                 >
                   {item.change}
+                </SvgText>
+              )}
+              {showMonthly && (
+                <SvgText
+                  x={x + 10}
+                  y={y + 56}
+                  fontSize={12}
+                  fontWeight="500"
+                  fill="#e2e8f0"
+                >
+                  ${monthlyVal}
                 </SvgText>
               )}
             </React.Fragment>
