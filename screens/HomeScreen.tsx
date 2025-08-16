@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import TreeMap, { TreeMapItem } from '../components/TreeMap';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 // Example subscription data (replace with real backend/store data)
 const treeMapData: TreeMapItem[] = [
@@ -16,10 +19,19 @@ const treeMapData: TreeMapItem[] = [
   { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, category: 'Monitoring', seats: 8 } },
 ];
 
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+
 const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const [selected, setSelected] = React.useState<TreeMapItem | null>(null);
   const sorted = React.useMemo(() => [...treeMapData].sort((a, b) => b.value - a.value), []);
   const total = React.useMemo(() => sorted.reduce((s, i) => s + i.value, 0), [sorted]);
+
+  const handleAppSelect = (item: TreeMapItem) => {
+    setSelected(item);
+    // Navigate immediately for smooth transition
+    navigation.navigate('AppDetail', { app: item });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,7 +42,7 @@ const HomeScreen: React.FC = () => {
 
           <TreeMap
             data={sorted}
-            onSelect={(item) => setSelected(item)}
+            onSelect={handleAppSelect}
             selectedName={selected?.name || null}
             height={420}
           />
