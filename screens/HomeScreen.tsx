@@ -36,6 +36,7 @@ const injectedHTML = (seriesData: TreeMapItem[]) => `<!DOCTYPE html><html><head>
     const chart = echarts.init(document.getElementById('chart'), null, {renderer:'canvas'});
     const option = {
       backgroundColor: '#07080a',
+      color: ['#000000'],
     tooltip: { trigger: 'item', formatter: function(p) {
       var d=p.data; return '<b>' + d.name + '</b><br/>Value: ' + d.value + '<br/>Change: ' + (d.change||'-') + '<br/>Monthly: $' + ((d.meta && d.meta.monthly) || '-') ; } },
       series: [{
@@ -45,8 +46,8 @@ const injectedHTML = (seriesData: TreeMapItem[]) => `<!DOCTYPE html><html><head>
         breadcrumb:{show:false},
         label: { show:true, formatter: (p)=> p.data.name, color:'#f8fafc', fontSize:12, overflow:'truncate' },
         upperLabel:{show:false},
-        itemStyle:{ borderColor:'#0f172a', borderWidth:1, gapWidth:2 },
-        levels:[{colorSaturation:[0.35,0.85], itemStyle:{gapWidth:2,borderColor:'#0f172a'} }],
+        itemStyle:{ borderColor:'#1e293b', borderWidth:1, gapWidth:2, color:'#000000' },
+        levels:[{ itemStyle:{ gapWidth:2, borderColor:'#1e293b', color:'#000000'} }],
         data: raw
       }]
     };
