@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, SafeAreaView, View, Text } from 'react-native';
+import { StyleSheet, SafeAreaView, View, Text, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import TreeMap, { TreeMapItem } from '../components/TreeMap';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 const data: TreeMapItem[] = [
   { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, category: 'Design', owner: 'Design Team', seats: 25 } },
@@ -39,6 +41,14 @@ const HomeScreen: React.FC = () => {
     navigation.navigate('AppDetail', { app: item });
   };
 
+  // Calculate TreeMap height based on percentages of screen height
+  // Use percentages to ensure proper scaling across different screen sizes
+  const headerPercent = 0.12; // Header takes approximately 12% of screen
+  const safeAreaPercent = 0.06; // SafeArea insets take about 6% of screen
+  const bottomPaddingPercent = 0.08; // Increase bottom padding to 8% of screen to prevent cutoff
+  const availableHeightPercent = 0.64; // Reduce TreeMap height to 64% of screen height
+  const adjustedHeight = screenHeight * availableHeightPercent;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}> 
@@ -50,7 +60,7 @@ const HomeScreen: React.FC = () => {
           data={sorted}
           onSelect={handleItemSelect}
           selectedName={selectedName}
-          height={500}
+          height={adjustedHeight}
         />
       </View>
     </SafeAreaView>
@@ -62,7 +72,7 @@ const styles = StyleSheet.create({
   header:{ paddingTop:40, paddingHorizontal:20, paddingBottom:16 },
   title:{ fontSize:26, fontWeight:'700', color:'#f8fafc', textAlign:'center', marginBottom:4 },
   subtitle:{ fontSize:14, color:'#64748b', textAlign:'center' },
-  chartWrapper:{ flex:1, paddingHorizontal:12, paddingBottom:20 },
+  chartWrapper:{ flex:1, paddingHorizontal:12, paddingBottom:40, marginBottom: 20 },
 });
 
 export default HomeScreen;

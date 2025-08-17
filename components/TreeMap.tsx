@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export interface TreeMapItem {
   name: string;
@@ -101,8 +101,8 @@ const accentPalette = [
 
 const TreeMap: React.FC<TreeMapProps> = ({
   data,
-  width = screenWidth * 0.92,
-  height = 400,
+  width = screenWidth * 0.90,
+  height = screenHeight * 0.80,
   onSelect,
   selectedName,
   dark = true
@@ -164,7 +164,7 @@ const TreeMap: React.FC<TreeMapProps> = ({
           // Display parameters based on box size
           const showName = rectWidth > 55 && rectHeight > 38;
           const showChange = !isAddItem && rectWidth > 70 && rectHeight > 54; // space for second line
-          const showMonthly = !isAddItem && rectWidth > 90 && rectHeight > 72 && item.meta?.monthly !== undefined;
+          const showMonthly = !isAddItem && rectWidth > 70 && rectHeight > 60 && item.meta?.monthly !== undefined;
           const monthlyVal = item.meta?.monthly;
           const shareTopRight = !isAddItem && rectWidth > 70 && rectHeight > 42;
           let nameFont = rectWidth > 140 ? 17 : rectWidth > 110 ? 15 : rectWidth > 80 ? 13 : 12;
@@ -177,10 +177,10 @@ const TreeMap: React.FC<TreeMapProps> = ({
                 width={rectWidth}
                 height={rectHeight}
                 fill={'#050607'}
-                stroke={isSelected ? '#ffffff' : '#11171e'}
+                stroke={'#ffffff'}
                 strokeWidth={isSelected ? 2 : 1}
-                rx={6}
-                ry={6}
+                rx={0}
+                ry={0}
                 onPress={() => onSelect && onSelect(item)}
               />
               <Rect
@@ -188,11 +188,13 @@ const TreeMap: React.FC<TreeMapProps> = ({
                 y={y+1}
                 width={rectWidth-2}
                 height={rectHeight-2}
-                fill={isAddItem ? '#ef4444' : withAlpha(accent, intensity)}
-                rx={5}
-                ry={5}
+                fill={isAddItem ? '#666666' : '#000000'}
+                rx={0}
+                ry={0}
                 pointerEvents="none"
               />
+              
+              {/* White box icon removed */}
               
               {/* For the add item, show a plus sign */}
               {isAddItem ? (
@@ -208,51 +210,84 @@ const TreeMap: React.FC<TreeMapProps> = ({
                 </SvgText>
               ) : (
                 <>
-                  {shareTopRight && (
-                    <SvgText
-                      x={x + rectWidth - 8}
-                      y={y + 16}
-                      fontSize={11}
-                      fontWeight="500"
-                      fill="#94a3b8"
-                      textAnchor="end"
-                    >
-                      {pct}
-                    </SvgText>
-                  )}
-                  {showName && (
-                    <SvgText
-                      x={x + 10}
-                      y={y + 20}
-                      fontSize={nameFont}
-                      fontWeight="600"
-                      fill="#f1f5f9"
-                    >
-                      {item.name.length > 16 ? item.name.substring(0, 13) + '…' : item.name}
-                    </SvgText>
-                  )}
-                  {showChange && (
-                    <SvgText
-                      x={x + 10}
-                      y={y + 38}
-                      fontSize={12}
-                      fontWeight="500"
-                      fill={item.change.startsWith('+') ? '#22c55e' : '#ef4444'}
-                    >
-                      {item.change}
-                    </SvgText>
-                  )}
-                  {showMonthly && (
-                    <SvgText
-                      x={x + 10}
-                      y={y + 56}
-                      fontSize={12}
-                      fontWeight="500"
-                      fill="#e2e8f0"
-                    >
-                      ${monthlyVal}
-                    </SvgText>
-                  )}
+                  {/* Display app name at the top and percentage in large bold text */}
+                  {(() => {
+                    // Calculate font sizes based on box dimensions
+                    const minDimension = Math.min(rectWidth, rectHeight);
+                    const boxArea = rectWidth * rectHeight;
+                    
+                    // App name at top (smaller font)
+                    const nameFontSize = Math.max(
+                      12, // Minimum font size for name
+                      Math.min(
+                        20, // Maximum font size for name
+                        Math.floor(minDimension * 0.12) // 12% of the minimum dimension
+                      )
+                    );
+                    
+                    // Format amount with dollar sign
+                    const amount = monthlyVal !== undefined ? `$${monthlyVal}` : '$0';
+                    const amountLength = amount.length;
+                    
+                    // Adaptive amount font size calculation
+                    // For smaller amounts (fewer digits), we can use larger font
+                    // For longer amounts, we need to reduce the size
+                    const sizeFactor = amountLength <= 3 ? 0.42 : 
+                                       amountLength <= 4 ? 0.38 : 
+                                       amountLength <= 5 ? 0.36 :
+                                       amountLength <= 6 ? 0.34 : 0.30;
+                    
+                    // More advanced scaling based on both dimensions and area
+                    const amountFontSize = Math.max(
+                      20, // Minimum font size for amount
+                      Math.min(
+                        72, // Maximum font size for amount 
+                        Math.floor(minDimension * sizeFactor), // Scaled by minimum dimension
+                        Math.floor(Math.sqrt(boxArea) * 0.22) // Also consider total area
+                      )
+                    );
+                    
+                    // Dynamic positioning based on box dimensions
+                    const topPadding = Math.max(10, Math.min(16, rectHeight * 0.08));
+                    const nameYPos = y + topPadding + (nameFontSize * 0.8);
+                    
+                    // Perfect center positioning for amount
+                    // SVG text has baseline alignment, so we need to adjust y position to visually center it
+                    // Adding 1/3 of font size as a correction for visual center alignment
+                    const amountYPos = y + (rectHeight / 2) + (amountFontSize / 3);
+                    
+                    return (
+                      <>
+                        {/* App name at top - only show if enough space */}
+                        {(rectWidth > 50 && rectHeight > 40) && (
+                          <SvgText
+                            x={x + Math.min(15, rectWidth * 0.08)}
+                            y={nameYPos}
+                            fontSize={nameFontSize}
+                            fontWeight="500"
+                            fill="#ffffff"
+                            textAnchor="start"
+                          >
+                            {item.name.length > 12 && rectWidth < 120 
+                              ? item.name.substring(0, 10) + '...' 
+                              : item.name}
+                          </SvgText>
+                        )}
+                        
+                        {/* Large amount value positioned based on available space */}
+                        <SvgText
+                          x={x + (rectWidth / 2)}
+                          y={amountYPos}
+                          fontSize={amountFontSize}
+                          fontWeight="900"
+                          fill="#ffffff"
+                          textAnchor="middle"
+                        >
+                          {amount}
+                        </SvgText>
+                      </>
+                    );
+                  })()}
                 </>
               )}
             </React.Fragment>
@@ -266,7 +301,10 @@ const TreeMap: React.FC<TreeMapProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Change to flex-start to prevent centering that could cause cutoff
+    paddingBottom: 20, // Increase bottom padding to ensure visibility
+    overflow: 'hidden', // Ensure content doesn't overflow the container
+    marginBottom: 10, // Add margin at the bottom
   }
 });
 
