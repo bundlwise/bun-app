@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
 import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -107,10 +107,31 @@ const TreeMap: React.FC<TreeMapProps> = ({
   selectedName,
   dark = true
 }) => {
-  const layouts = React.useMemo(() => calculateLayout(data, width, height), [data, width, height]);
-  const total = React.useMemo(() => data.reduce((s, i) => s + i.value, 0) || 1, [data]);
+  // Filter out Datadog from the data and add a special "Add" item
+  const processedData = React.useMemo(() => {
+    // Filter out Datadog
+    const filteredData = data.filter(item => item.name !== 'Datadog');
+    
+    // Create a special Add item
+    const addItem: TreeMapItem = {
+      name: 'Add Subscription',
+      value: 14, // Use Datadog's value (14) for the Add button
+      change: '',
+      color: '#ef4444', // Red color
+      meta: { isAddAction: true }
+    };
+    
+    // Return filtered data with Add item
+    return [...filteredData, addItem];
+  }, [data]);
+  
+  // Create the layout using the processed data
+  const layouts = React.useMemo(() => calculateLayout(processedData, width, height), 
+    [processedData, width, height]);
+  
+  const total = React.useMemo(() => processedData.reduce((s, i) => s + i.value, 0) || 1, [processedData]);
 
-  const maxValue = React.useMemo(() => Math.max(...data.map(d => d.value), 1), [data]);
+  const maxValue = React.useMemo(() => Math.max(...processedData.map(d => d.value), 1), [processedData]);
 
   function withAlpha(hex: string, alpha: number) {
     const h = hex.replace('#','');
@@ -120,23 +141,34 @@ const TreeMap: React.FC<TreeMapProps> = ({
     const b = bigint & 255;
     return `rgba(${r},${g},${b},${alpha})`;
   }
-
+  
   return (
     <View style={styles.container}>
       <Svg width={width} height={height}>
         {layouts.map(layout => {
           const { x, y, width: rectWidth, height: rectHeight, item } = layout;
-          const pctNum = (item.value / total) * 100;
-          const pct = pctNum.toFixed(1) + '%';
+          const isAddItem = item.meta?.isAddAction === true;
           const isSelected = selectedName === item.name;
-          const accent = item.color || accentPalette[data.findIndex(d => d.name === item.name) % accentPalette.length];
-          const intensity = 0.12 + (item.value / maxValue) * 0.28; // 0.12 - 0.40 range
+          
+          // For normal items, show percentage
+          let pct = '';
+          if (!isAddItem) {
+            const pctNum = (item.value / total) * 100;
+            pct = pctNum.toFixed(1) + '%';
+          }
+          
+          // Either use item's color or pick from palette
+          const accent = item.color || accentPalette[processedData.findIndex((d: TreeMapItem) => d.name === item.name) % accentPalette.length];
+          const intensity = isAddItem ? 1 : (0.12 + (item.value / maxValue) * 0.28); // 0.12 - 0.40 range
+          
+          // Display parameters based on box size
           const showName = rectWidth > 55 && rectHeight > 38;
-          const showChange = rectWidth > 70 && rectHeight > 54; // space for second line
-          const showMonthly = rectWidth > 90 && rectHeight > 72 && item.meta?.monthly !== undefined;
+          const showChange = !isAddItem && rectWidth > 70 && rectHeight > 54; // space for second line
+          const showMonthly = !isAddItem && rectWidth > 90 && rectHeight > 72 && item.meta?.monthly !== undefined;
           const monthlyVal = item.meta?.monthly;
-          const shareTopRight = rectWidth > 70 && rectHeight > 42;
+          const shareTopRight = !isAddItem && rectWidth > 70 && rectHeight > 42;
           let nameFont = rectWidth > 140 ? 17 : rectWidth > 110 ? 15 : rectWidth > 80 ? 13 : 12;
+          
           return (
             <React.Fragment key={item.name}>
               <Rect
@@ -156,55 +188,72 @@ const TreeMap: React.FC<TreeMapProps> = ({
                 y={y+1}
                 width={rectWidth-2}
                 height={rectHeight-2}
-                fill={withAlpha(accent, intensity)}
+                fill={isAddItem ? '#ef4444' : withAlpha(accent, intensity)}
                 rx={5}
                 ry={5}
                 pointerEvents="none"
               />
-              {shareTopRight && (
+              
+              {/* For the add item, show a plus sign */}
+              {isAddItem ? (
                 <SvgText
-                  x={x + rectWidth - 8}
-                  y={y + 16}
-                  fontSize={11}
-                  fontWeight="500"
-                  fill="#94a3b8"
-                  textAnchor="end"
+                  x={x + (rectWidth / 2)}
+                  y={y + (rectHeight / 2) + 8}
+                  fontSize={32}
+                  fontWeight="bold"
+                  fill="#ffffff"
+                  textAnchor="middle"
                 >
-                  {pct}
+                  +
                 </SvgText>
-              )}
-              {showName && (
-                <SvgText
-                  x={x + 10}
-                  y={y + 20}
-                  fontSize={nameFont}
-                  fontWeight="600"
-                  fill="#f1f5f9"
-                >
-                  {item.name.length > 16 ? item.name.substring(0, 13) + '…' : item.name}
-                </SvgText>
-              )}
-              {showChange && (
-                <SvgText
-                  x={x + 10}
-                  y={y + 38}
-                  fontSize={12}
-                  fontWeight="500"
-                  fill={item.change.startsWith('+') ? '#22c55e' : '#ef4444'}
-                >
-                  {item.change}
-                </SvgText>
-              )}
-              {showMonthly && (
-                <SvgText
-                  x={x + 10}
-                  y={y + 56}
-                  fontSize={12}
-                  fontWeight="500"
-                  fill="#e2e8f0"
-                >
-                  ${monthlyVal}
-                </SvgText>
+              ) : (
+                <>
+                  {shareTopRight && (
+                    <SvgText
+                      x={x + rectWidth - 8}
+                      y={y + 16}
+                      fontSize={11}
+                      fontWeight="500"
+                      fill="#94a3b8"
+                      textAnchor="end"
+                    >
+                      {pct}
+                    </SvgText>
+                  )}
+                  {showName && (
+                    <SvgText
+                      x={x + 10}
+                      y={y + 20}
+                      fontSize={nameFont}
+                      fontWeight="600"
+                      fill="#f1f5f9"
+                    >
+                      {item.name.length > 16 ? item.name.substring(0, 13) + '…' : item.name}
+                    </SvgText>
+                  )}
+                  {showChange && (
+                    <SvgText
+                      x={x + 10}
+                      y={y + 38}
+                      fontSize={12}
+                      fontWeight="500"
+                      fill={item.change.startsWith('+') ? '#22c55e' : '#ef4444'}
+                    >
+                      {item.change}
+                    </SvgText>
+                  )}
+                  {showMonthly && (
+                    <SvgText
+                      x={x + 10}
+                      y={y + 56}
+                      fontSize={12}
+                      fontWeight="500"
+                      fill="#e2e8f0"
+                    >
+                      ${monthlyVal}
+                    </SvgText>
+                  )}
+                </>
               )}
             </React.Fragment>
           );
@@ -218,7 +267,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
+  }
 });
 
 export default TreeMap;
