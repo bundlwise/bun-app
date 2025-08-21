@@ -107,10 +107,35 @@ const TreeMap: React.FC<TreeMapProps> = ({
   selectedName,
   dark = true
 }) => {
-  // Filter out Datadog from the data and add a special "Add" item
+  // State for filtering
+  const [selectedFilter, setSelectedFilter] = React.useState<'all' | 'categories' | 'monthly' | 'quarterly'>('all');
+
+  // Filter and process data based on selection
   const processedData = React.useMemo(() => {
-    // Filter out Datadog
-    const filteredData = data.filter(item => item.name !== 'Datadog');
+    let filteredData = data;
+    
+    // Apply filters based on selection
+    switch (selectedFilter) {
+      case 'categories':
+        // Group by categories - show all items but they'll be arranged by category
+        filteredData = data;
+        break;
+      case 'monthly':
+        // Filter for monthly subscriptions
+        filteredData = data.filter(item => item.meta?.billingCycle === 'monthly');
+        break;
+      case 'quarterly':
+        // Filter for quarterly subscriptions
+        filteredData = data.filter(item => item.meta?.billingCycle === 'quarterly');
+        break;
+      default:
+        // 'all' - show all items
+        filteredData = data;
+        break;
+    }
+    
+    // Filter out Datadog from the data and add a special "Add" item
+    const finalData = filteredData.filter(item => item.name !== 'Datadog');
     
     // Create a special Add item
     const addItem: TreeMapItem = {
@@ -122,8 +147,8 @@ const TreeMap: React.FC<TreeMapProps> = ({
     };
     
     // Return filtered data with Add item
-    return [...filteredData, addItem];
-  }, [data]);
+    return [...finalData, addItem];
+  }, [data, selectedFilter]);
   
   // Create the layout using the processed data with proper spacing
   const layouts = React.useMemo(() => {
@@ -132,7 +157,36 @@ const TreeMap: React.FC<TreeMapProps> = ({
     const adjustedWidth = width - (margin * 2);
     const adjustedHeight = height - (margin * 2);
     
-    const baseLayouts = calculateLayout(processedData, adjustedWidth, adjustedHeight);
+    let dataToLayout = processedData;
+    
+    // If categories filter is selected, group items by category
+    if (selectedFilter === 'categories') {
+      // Group by category
+      const groupedData = processedData.reduce((groups, item) => {
+        if (item.meta?.isAddAction) {
+          // Add item goes at the end
+          if (!groups['add']) {
+            groups['add'] = [];
+          }
+          groups['add'].push(item);
+        } else {
+          const category = item.meta?.category || 'Other';
+          if (!groups[category]) {
+            groups[category] = [];
+          }
+          groups[category].push(item);
+        }
+        return groups;
+      }, {} as Record<string, TreeMapItem[]>);
+      
+      // Flatten grouped data maintaining category order
+      const categoryKeys = Object.keys(groupedData);
+      dataToLayout = categoryKeys.reduce((acc, category) => {
+        return [...acc, ...groupedData[category]];
+      }, [] as TreeMapItem[]);
+    }
+    
+    const baseLayouts = calculateLayout(dataToLayout, adjustedWidth, adjustedHeight);
     
     // Add margin and spacing to each tile and ensure they fit within bounds
     return baseLayouts.map(layout => {
@@ -157,7 +211,7 @@ const TreeMap: React.FC<TreeMapProps> = ({
         height: innerHeight
       };
     });
-  }, [processedData, width, height]);
+  }, [processedData, width, height, selectedFilter]);
   
   const total = React.useMemo(() => processedData.reduce((s, i) => s + i.value, 0) || 1, [processedData]);
 
