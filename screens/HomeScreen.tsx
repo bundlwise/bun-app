@@ -8,16 +8,16 @@ import TreeMap, { TreeMapItem } from '../components/TreeMap';
 const { height: screenHeight } = Dimensions.get('window');
 
 const data: TreeMapItem[] = [
-  { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, category: 'Design', owner: 'Design Team', seats: 25 } },
+  { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, category: 'Design', owner: 'Design Team', seats: 25, paymentDate: '2024-01-15' } },
   { name: 'Sketch', value: 28, change: '-4.5%', meta: { monthly: 20, category: 'Design', seats: 12 } },
-  { name: 'Notion', value: 35, change: '+12.1%', meta: { monthly: 18, category: 'Knowledge', seats: 40 } },
-  { name: 'Slack', value: 55, change: '+3.4%', meta: { monthly: 240, category: 'Collaboration', seats: 120 } },
+  { name: 'Notion', value: 35, change: '+12.1%', meta: { monthly: 18, category: 'Knowledge', seats: 40, paymentDate: '2024-01-20' } },
+  { name: 'Slack', value: 55, change: '+3.4%', meta: { monthly: 240, category: 'Collaboration', seats: 120, paymentDate: '2024-01-25' } },
   { name: 'Linear', value: 22, change: '+6.7%', meta: { monthly: 80, category: 'PM', seats: 35 } },
-  { name: 'Jira', value: 30, change: '-2.1%', meta: { monthly: 210, category: 'PM', seats: 150 } },
+  { name: 'Jira', value: 30, change: '-2.1%', meta: { monthly: 210, category: 'PM', seats: 150, paymentDate: '2024-01-18' } },
   { name: 'GitHub', value: 50, change: '+1.5%', meta: { monthly: 400, category: 'Dev', seats: 60 } },
-  { name: 'Vercel', value: 18, change: '+9.9%', meta: { monthly: 65, category: 'Infra', seats: 10 } },
+  { name: 'Vercel', value: 18, change: '+9.9%', meta: { monthly: 65, category: 'Infra', seats: 10, paymentDate: '2024-01-22' } },
   { name: 'Sentry', value: 16, change: '+5.0%', meta: { monthly: 90, category: 'Monitoring', seats: 10 } },
-  { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, category: 'Monitoring', seats: 8 } },
+  { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, category: 'Monitoring', seats: 8, paymentDate: '2024-01-30' } },
 ];
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -26,6 +26,11 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const sorted = useMemo(() => [...data].sort((a,b) => b.value - a.value), []);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  // Calculate total monthly amount
+  const totalMonthlyAmount = useMemo(() => {
+    return data.reduce((total, item) => total + (item.meta?.monthly || 0), 0);
+  }, []);
 
   const handleItemSelect = (item: TreeMapItem) => {
     // Check if this is the "Add" action
@@ -51,9 +56,8 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}> 
-        <Text style={styles.title}>Subscription Analytics</Text>
-        <Text style={styles.subtitle}>Cost distribution visualization • Tap for details</Text>
+      <View style={styles.amountContainer}>
+        <Text style={styles.totalAmount}>${totalMonthlyAmount.toLocaleString()}</Text>
       </View>
       <View style={styles.chartWrapper}>
         <TreeMap 
@@ -71,8 +75,9 @@ const styles = StyleSheet.create({
   container:{ flex:1, backgroundColor:'#07080a'},
   header:{ paddingTop:40, paddingHorizontal:20, paddingBottom:16 },
   title:{ fontSize:26, fontWeight:'700', color:'#f8fafc', textAlign:'center', marginBottom:4 },
-  subtitle:{ fontSize:14, color:'#64748b', textAlign:'center' },
-  chartWrapper:{ flex:1, paddingHorizontal:12, paddingBottom:40, marginBottom: 20 },
+  amountContainer:{ paddingTop:65, paddingHorizontal:20, paddingBottom:0, alignItems:'flex-start' },
+  totalAmount:{ fontSize:48, fontWeight:'900', color:'#f8fafc', textAlign:'left' },
+  chartWrapper:{ flex:1, paddingHorizontal:12, paddingTop:0, paddingBottom:40, marginBottom: 20 },
 });
 
 export default HomeScreen;

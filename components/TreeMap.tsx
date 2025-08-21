@@ -315,6 +315,23 @@ const TreeMap: React.FC<TreeMapProps> = ({
                         >
                           {monthlyVal !== undefined ? monthlyVal : '0'}
                         </SvgText>
+                        
+                        {/* Payment date in bottom right - only show if enough space and date exists */}
+                        {item.meta?.paymentDate && rectWidth > 80 && rectHeight > 60 && (
+                          <SvgText
+                            x={x + rectWidth - 8}
+                            y={y + rectHeight - 8}
+                            fontSize={Math.max(8, Math.min(12, rectWidth * 0.08))}
+                            fontWeight="500"
+                            fill="rgba(255,255,255,0.8)"
+                            textAnchor="end"
+                          >
+                            {new Date(item.meta.paymentDate).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </SvgText>
+                        )}
                       </>
                     );
                   })()}

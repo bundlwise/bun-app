@@ -74,8 +74,8 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
           {/* Analytics Overview - Top Section */}
           <View style={styles.analyticsContainer}>
-            <Text style={styles.sectionTitle}>Analytics Overview</Text>
-            
+           
+  
             {/* Primary Metrics Row */}
             <View style={styles.primaryMetricsRow}>
               <View style={[styles.primaryMetric, styles.primaryMetricLeft]}>
