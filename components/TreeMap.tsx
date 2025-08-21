@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, ScrollView } from 'react-native';
 import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -207,18 +207,18 @@ const TreeMap: React.FC<TreeMapProps> = ({
                 width={rectWidth}
                 height={rectHeight}
                 fill={'#050607'}
-                stroke={'#ffffff'}
+                stroke={isAddItem ? 'transparent' : '#ffffff'}
                 strokeWidth={isSelected ? 2 : 1}
                 rx={0}
                 ry={0}
                 onPress={() => onSelect && onSelect(item)}
               />
               <Rect
-                x={x+1}
-                y={y+1}
-                width={rectWidth-2}
-                height={rectHeight-2}
-                fill={isAddItem ? '#666666' : '#000000'}
+                x={isAddItem ? x : x+1}
+                y={isAddItem ? y : y+1}
+                width={isAddItem ? rectWidth : rectWidth-2}
+                height={isAddItem ? rectHeight : rectHeight-2}
+                fill={isAddItem ? '#ffffff' : '#000000'}
                 rx={0}
                 ry={0}
                 pointerEvents="none"
@@ -233,7 +233,7 @@ const TreeMap: React.FC<TreeMapProps> = ({
                   y={y + (rectHeight / 2) + 8}
                   fontSize={32}
                   fontWeight="bold"
-                  fill="#ffffff"
+                  fill="#000000"
                   textAnchor="middle"
                 >
                   +
@@ -341,6 +341,27 @@ const TreeMap: React.FC<TreeMapProps> = ({
           );
         })}
       </Svg>
+      
+      {/* Separator line below TreeMap */}
+      <View style={styles.separator} />
+      
+      {/* 4 Horizontal subscription boxes */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.horizontalBoxesContainer}>
+          <View style={styles.horizontalBox}>
+            <Text style={styles.boxTitle}>All</Text>
+          </View>
+          <View style={styles.horizontalBox}>
+            <Text style={styles.boxTitle}>Categories</Text>
+          </View>
+          <View style={styles.horizontalBox}>
+            <Text style={styles.boxTitle}>Monthly</Text>
+          </View>
+          <View style={styles.horizontalBox}>
+            <Text style={styles.boxTitle}>Quarterly</Text>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -359,7 +380,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16, // Increased padding for better spacing
     minHeight: 400, // Ensure minimum height for proper display
-  }
+  },
+  separator: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#333333', // A slightly lighter gray for the separator
+    marginTop: 10,
+  },
+  horizontalBoxesContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginTop: 10,
+    paddingRight: 20,
+  },
+  horizontalBox: {
+    backgroundColor: '#1a1a1a',
+    padding: 15,
+    minWidth: 120,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+  boxTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
 });
 
 export default TreeMap;
