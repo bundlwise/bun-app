@@ -101,8 +101,8 @@ const accentPalette = [
 
 const TreeMap: React.FC<TreeMapProps> = ({
   data,
-  width = screenWidth * 0.90,
-  height = screenHeight * 0.80,
+  width = screenWidth * 1.0, // Use 100% of screen width
+  height = screenHeight * 1.0, // Use 100% of screen height
   onSelect,
   selectedName,
   dark = true
@@ -125,9 +125,39 @@ const TreeMap: React.FC<TreeMapProps> = ({
     return [...filteredData, addItem];
   }, [data]);
   
-  // Create the layout using the processed data
-  const layouts = React.useMemo(() => calculateLayout(processedData, width, height), 
-    [processedData, width, height]);
+  // Create the layout using the processed data with proper spacing
+  const layouts = React.useMemo(() => {
+    const spacing = 8; // Increased spacing for better visibility
+    const margin = 16; // Add margin to prevent edge cutting
+    const adjustedWidth = width - (margin * 2);
+    const adjustedHeight = height - (margin * 2);
+    
+    const baseLayouts = calculateLayout(processedData, adjustedWidth, adjustedHeight);
+    
+    // Add margin and spacing to each tile and ensure they fit within bounds
+    return baseLayouts.map(layout => {
+      const innerWidth = Math.max(0, layout.width - spacing);
+      const innerHeight = Math.max(0, layout.height - spacing);
+      
+      let adjustedX = layout.x + margin + spacing / 2;
+      let adjustedY = layout.y + margin + spacing / 2;
+      
+      // Ensure the layout doesn't exceed container boundaries
+      const maxX = width - innerWidth - margin;
+      const maxY = height - innerHeight - margin;
+      
+      adjustedX = Math.min(Math.max(margin, adjustedX), maxX);
+      adjustedY = Math.min(Math.max(margin, adjustedY), maxY);
+      
+      return {
+        ...layout,
+        x: adjustedX,
+        y: adjustedY,
+        width: innerWidth,
+        height: innerHeight
+      };
+    });
+  }, [processedData, width, height]);
   
   const total = React.useMemo(() => processedData.reduce((s, i) => s + i.value, 0) || 1, [processedData]);
 
@@ -262,14 +292,14 @@ const TreeMap: React.FC<TreeMapProps> = ({
                         {(rectWidth > 50 && rectHeight > 40) && (
                           <SvgText
                             x={x + Math.min(15, rectWidth * 0.08)}
-                            y={nameYPos}
-                            fontSize={nameFontSize}
+                            y={y + 20}
+                            fontSize={Math.min(14, Math.max(10, rectWidth * 0.12))}
                             fontWeight="500"
                             fill="#ffffff"
                             textAnchor="start"
                           >
-                            {item.name.length > 12 && rectWidth < 120 
-                              ? item.name.substring(0, 10) + '...' 
+                            {item.name.length > 10 && rectWidth < 120 
+                              ? item.name.substring(0, 8) + '...' 
                               : item.name}
                           </SvgText>
                         )}
@@ -277,13 +307,13 @@ const TreeMap: React.FC<TreeMapProps> = ({
                         {/* Large amount value positioned based on available space */}
                         <SvgText
                           x={x + (rectWidth / 2)}
-                          y={amountYPos}
-                          fontSize={amountFontSize}
+                          y={y + (rectHeight / 2) + 8}
+                          fontSize={Math.min(48, Math.max(16, rectWidth * 0.25))}
                           fontWeight="900"
                           fill="#ffffff"
                           textAnchor="middle"
                         >
-                          {amount}
+                          {monthlyVal !== undefined ? monthlyVal : '0'}
                         </SvgText>
                       </>
                     );
@@ -301,10 +331,17 @@ const TreeMap: React.FC<TreeMapProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'flex-start', // Change to flex-start to prevent centering that could cause cutoff
-    paddingBottom: 20, // Increase bottom padding to ensure visibility
-    overflow: 'hidden', // Ensure content doesn't overflow the container
-    marginBottom: 10, // Add margin at the bottom
+    justifyContent: 'flex-start',
+    paddingBottom: 20,
+    overflow: 'visible', // Change to visible to prevent cutting
+    marginBottom: 10,
+    width: '100%', // Use full 100% of parent width
+    height: '100%', // Use full 100% of parent height
+    alignSelf: 'center', // Center the container
+    backgroundColor: '#000000', // Black background
+    borderRadius: 8,
+    padding: 16, // Increased padding for better spacing
+    minHeight: 400, // Ensure minimum height for proper display
   }
 });
 

@@ -420,6 +420,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    alignItems: 'center', // Center content to accommodate 80% TreeMap
   },
   appHeader: {
     flexDirection: 'row',
