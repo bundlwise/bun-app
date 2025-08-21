@@ -10,14 +10,14 @@ const { height: screenHeight } = Dimensions.get('window');
 const data: TreeMapItem[] = [
   { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, category: 'Design', owner: 'Design Team', seats: 25, paymentDate: '2024-01-15' } },
   { name: 'Sketch', value: 28, change: '-4.5%', meta: { monthly: 20, category: 'Design', seats: 12 } },
-  { name: 'Notion', value: 35, change: '+12.1%', meta: { monthly: 18, category: 'Knowledge', seats: 40, paymentDate: '2024-01-20' } },
   { name: 'Slack', value: 55, change: '+3.4%', meta: { monthly: 240, category: 'Collaboration', seats: 120, paymentDate: '2024-01-25' } },
-  { name: 'Linear', value: 22, change: '+6.7%', meta: { monthly: 80, category: 'PM', seats: 35 } },
   { name: 'Jira', value: 30, change: '-2.1%', meta: { monthly: 210, category: 'PM', seats: 150, paymentDate: '2024-01-18' } },
-  { name: 'GitHub', value: 50, change: '+1.5%', meta: { monthly: 400, category: 'Dev', seats: 60 } },
-  { name: 'Vercel', value: 18, change: '+9.9%', meta: { monthly: 65, category: 'Infra', seats: 10, paymentDate: '2024-01-22' } },
-  { name: 'Sentry', value: 16, change: '+5.0%', meta: { monthly: 90, category: 'Monitoring', seats: 10 } },
   { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, category: 'Monitoring', seats: 8, paymentDate: '2024-01-30' } },
+  { name: 'Netflix', value: 25, change: '+0%', meta: { monthly: 15.99, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-28' } },
+  { name: 'Prime', value: 18, change: '+0%', meta: { monthly: 12.99, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-29' } },
+  { name: 'Swiggy', value: 22, change: '+5.2%', meta: { monthly: 15, category: 'Food', owner: 'Food Team', seats: 50, paymentDate: '2024-01-26' } },
+  { name: 'Zomato', value: 20, change: '+3.1%', meta: { monthly: 12, category: 'Food', owner: 'Food Team', seats: 45, paymentDate: '2024-01-27' } },
+  { name: 'Uber Eats', value: 19, change: '+2.8%', meta: { monthly: 18, category: 'Food', owner: 'Food Team', seats: 40, paymentDate: '2024-01-24' } },
 ];
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
