@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, SafeAreaView, View, Text, Dimensions } from 'react-native';
+import { StyleSheet, SafeAreaView, View, Text, Dimensions, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -24,13 +24,26 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const sorted = useMemo(() => [...data].sort((a,b) => b.value - a.value), []);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  
+  // Filter data based on search query
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return data;
+    }
+    return data.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.meta?.category?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+  
+  const sorted = useMemo(() => [...filteredData].sort((a,b) => b.value - a.value), [filteredData]);
 
   // Calculate total monthly amount
   const totalMonthlyAmount = useMemo(() => {
-    return data.reduce((total, item) => total + (item.meta?.monthly || 0), 0);
-  }, []);
+    return filteredData.reduce((total, item) => total + (item.meta?.monthly || 0), 0);
+  }, [filteredData]);
 
   const handleItemSelect = (item: TreeMapItem) => {
     // Check if this is the "Add" action
@@ -67,6 +80,17 @@ const HomeScreen: React.FC = () => {
           height={adjustedHeight}
         />
       </View>
+      
+      {/* Search Bar at the bottom */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search apps or categories..."
+          placeholderTextColor="#64748b"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -77,7 +101,22 @@ const styles = StyleSheet.create({
   title:{ fontSize:26, fontWeight:'700', color:'#f8fafc', textAlign:'center', marginBottom:4 },
   amountContainer:{ paddingTop:65, paddingHorizontal:20, paddingBottom:0, alignItems:'flex-start' },
   totalAmount:{ fontSize:48, fontWeight:'900', color:'#f8fafc', textAlign:'left' },
-  chartWrapper:{ flex:1, paddingHorizontal:12, paddingTop:0, paddingBottom:40, marginBottom: 20 },
+  chartWrapper:{ flex:1, paddingHorizontal:12, paddingTop:0, paddingBottom:20, marginBottom: 0 },
+  searchContainer:{ paddingHorizontal:20, paddingBottom:20 },
+  searchInput:{ 
+    backgroundColor:'#1e293b',
+    borderRadius:12,
+    paddingHorizontal:16,
+    paddingVertical:12,
+    fontSize:16,
+    color:'#f8fafc',
+    borderWidth:1,
+    borderColor:'#374151',
+    height: 60,
+    width: 350,
+    marginLeft:10,
+    marginTop:-70,
+  },
 });
 
 export default HomeScreen;

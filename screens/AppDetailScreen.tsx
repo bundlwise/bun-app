@@ -115,9 +115,15 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             styles.monthCard,
             getCurrentMonth() === 'Aug' && styles.augustCard
           ]}>
-            <Text style={styles.monthTitle}>{getCurrentMonth()}</Text>
-            <Text style={styles.monthAmount}>${app.meta?.monthly || 0}</Text>
-            <Text style={styles.monthLabel}>Current Month</Text>
+            <View style={styles.monthCardTopLeft}>
+              <Text style={styles.monthTitle}>{getCurrentMonth()}</Text>
+            </View>
+            <View style={styles.monthCardCenter}>
+              <Text style={styles.monthAmount}>${app.meta?.monthly || 0}</Text>
+            </View>
+            <View style={styles.monthCardBottomRight}>
+              <Text style={styles.monthLabel}>Current Month</Text>
+            </View>
           </View>
 
           {/* Last Month Amount Card */}
@@ -126,9 +132,15 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
               styles.monthCard,
               getLastMonth() === 'Jul' && styles.julyCard
             ]}>
-              <Text style={styles.monthTitle}>{getLastMonth()}</Text>
-              <Text style={styles.monthAmount}>${Math.round((app.meta?.monthly || 0) * 0.9)}</Text>
-              <Text style={styles.monthLabel}>Last Month</Text>
+              <View style={styles.monthCardTopLeft}>
+                <Text style={styles.monthTitle}>{getLastMonth()}</Text>
+              </View>
+              <View style={styles.monthCardCenter}>
+                <Text style={styles.monthAmount}>${Math.round((app.meta?.monthly || 0) * 0.9)}</Text>
+              </View>
+              <View style={styles.monthCardBottomRight}>
+                <Text style={styles.monthLabel}>Last Month</Text>
+              </View>
             </View>
             {getLastMonth() === 'Jul' && (
               <View style={styles.addCard}>
@@ -180,17 +192,20 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#374151',
   },
   backButtonText: {
-    fontSize: 20,
+    fontSize: 24,
     color: '#f8fafc',
-    fontWeight: '600',
+    fontWeight: '700',
+    top: -4,
   },
   headerTitle: {
     fontSize: 18,
@@ -280,10 +295,24 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     padding: 20,
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#ffffff',
+    position: 'relative',
+  },
+  monthCardTopLeft: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+  },
+  monthCardCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+  },
+  monthCardBottomRight: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
   },
   augustCard: {
     borderRadius: 0,
