@@ -11,6 +11,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { TreeMapItem } from '../components/TreeMap';
+import Button from '../components/Button';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AppDetail'>;
 
@@ -138,13 +139,23 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
           {/* Action Buttons */}
           <View style={styles.actionsContainer}>
-            <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            <Button
+              title="Cancel"
+              onPress={handleCancel}
+              backgroundColor="transparent"
+              borderColor="#374151"
+              borderWidth={2}
+              textStyle={styles.cancelButtonText}
+              width="48%"
+            />
             
-            <TouchableOpacity style={[styles.actionButton, styles.payButton]} onPress={handlePay}>
-              <Text style={styles.payButtonText}>Pay</Text>
-            </TouchableOpacity>
+            <Button
+              title="Pay"
+              onPress={handlePay}
+              backgroundColor="#6366f1"
+              textStyle={styles.payButtonText}
+              width="48%"
+            />
           </View>
         </View>
       </ScrollView>
