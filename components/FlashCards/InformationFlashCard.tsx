@@ -19,7 +19,7 @@ interface InformationFlashCardProps {
   titleText?: string;
   subtitleText?: string;
 }
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const InformationFlashCard: React.FC<InformationFlashCardProps> = ({
   title,

@@ -36,9 +36,45 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       Dev: '#ec4899',
       Infra: '#84cc16',
       Monitoring: '#8b5cf6',
+      Entertainment: '#f43f5e',
+      Food: '#06b6d4',
     };
     return colors[category] || '#64748b';
   }, []);
+
+  // Calculate total amount spent (assuming it's the monthly cost * some multiplier)
+  const totalAmountSpent = React.useMemo(() => {
+    const monthlyCost = app.meta?.monthly || 0;
+    // For demo purposes, let's assume total spent is monthly cost * 12 (annual)
+    return monthlyCost * 12;
+  }, [app.meta?.monthly]);
+
+  // Get current month name
+  const getCurrentMonth = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentDate = new Date();
+    return months[currentDate.getMonth()];
+  };
+
+  // Get last month name
+  const getLastMonth = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentDate = new Date();
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    return months[lastMonth.getMonth()];
+  };
+
+  const handleCancel = () => {
+    // Handle cancel action
+    console.log('Cancel pressed');
+    navigation.goBack();
+  };
+
+  const handlePay = () => {
+    // Handle pay action
+    console.log('Pay pressed');
+    // You can navigate to payment screen or show payment modal
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,13 +88,14 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
 
         <View style={styles.content}>
-          {/* App Header */}
+          {/* App Header with Total Amount */}
           <View style={styles.appHeader}>
             <View style={[styles.appIcon, { backgroundColor: getCategoryColor(app.meta?.category || '') }]}>
               <Text style={styles.appIconText}>{app.name.charAt(0)}</Text>
             </View>
             <View style={styles.appInfo}>
               <Text style={styles.appName}>{app.name}</Text>
+              <Text style={styles.totalAmount}>${totalAmountSpent.toLocaleString()}</Text>
               <View style={styles.categoryBadge}>
                 <View style={[styles.categoryDot, { backgroundColor: getCategoryColor(app.meta?.category || '') }]} />
                 <Text style={styles.categoryText}>{app.meta?.category || 'Uncategorized'}</Text>
@@ -72,307 +109,41 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
 
-          {/* Analytics Overview - Top Section */}
-          <View style={styles.analyticsContainer}>
-           
-  
-            {/* Primary Metrics Row */}
-            <View style={styles.primaryMetricsRow}>
-              <View style={[styles.primaryMetric, styles.primaryMetricLeft]}>
-                <Text style={styles.primaryMetricValue}>{app.value}</Text>
-                <Text style={styles.primaryMetricLabel}>Usage Score</Text>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { 
-                    width: `${(app.value / 100) * 100}%`,
-                    backgroundColor: getCategoryColor(app.meta?.category || '') 
-                  }]} />
-                </View>
-              </View>
-              
-              {app.meta?.monthly && (
-                <View style={[styles.primaryMetric, styles.primaryMetricRight]}>
-                  <Text style={styles.primaryMetricValue}>${app.meta.monthly}</Text>
-                  <Text style={styles.primaryMetricLabel}>Monthly Cost</Text>
-                  <Text style={styles.costPerSeat}>
-                    ${app.meta.seats ? (app.meta.monthly / app.meta.seats).toFixed(2) : app.meta.monthly}/seat
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Analytics Grid */}
-            <View style={styles.analyticsGrid}>
-              {app.meta?.seats && (
-                <View style={styles.analyticsCard}>
-                  <View style={styles.analyticsCardHeader}>
-                    <Text style={styles.analyticsIcon}>👥</Text>
-                    <Text style={styles.analyticsValue}>{app.meta.seats}</Text>
-                  </View>
-                  <Text style={styles.analyticsLabel}>Active Seats</Text>
-                  <Text style={styles.analyticsSubtext}>
-                    {Math.round((app.meta.seats / (app.meta.seats + 5)) * 100)}% utilization
-                  </Text>
-                </View>
-              )}
-              
-              <View style={styles.analyticsCard}>
-                <View style={styles.analyticsCardHeader}>
-                  <Text style={styles.analyticsIcon}>📊</Text>
-                  <Text style={styles.analyticsValue}>{Math.round(app.value * 1.2)}%</Text>
-                </View>
-                <Text style={styles.analyticsLabel}>Efficiency</Text>
-                <Text style={styles.analyticsSubtext}>
-                  {app.value > 50 ? 'Above average' : 'Below average'}
-                </Text>
-              </View>
-              
-              <View style={styles.analyticsCard}>
-                <View style={styles.analyticsCardHeader}>
-                  <Text style={styles.analyticsIcon}>⚡</Text>
-                  <Text style={styles.analyticsValue}>{Math.round(app.value / 7)}</Text>
-                </View>
-                <Text style={styles.analyticsLabel}>Daily Users</Text>
-                <Text style={styles.analyticsSubtext}>
-                  Last 7 days avg
-                </Text>
-              </View>
-              
-              <View style={styles.analyticsCard}>
-                <View style={styles.analyticsCardHeader}>
-                  <Text style={styles.analyticsIcon}>🎯</Text>
-                  <Text style={styles.analyticsValue}>{85 + Math.round(app.value / 10)}%</Text>
-                </View>
-                <Text style={styles.analyticsLabel}>ROI Score</Text>
-                <Text style={styles.analyticsSubtext}>
-                  Value delivered
-                </Text>
-              </View>
-            </View>
-
-            {/* Usage Trend Chart */}
-            <View style={styles.trendContainer}>
-              <Text style={styles.trendTitle}>7-Day Usage Trend</Text>
-              <View style={styles.trendChart}>
-                {[65, 72, 68, 85, 92, 88, app.value].map((value, index) => (
-                  <View key={index} style={styles.trendBar}>
-                    <View style={[styles.trendBarFill, { 
-                      height: `${value}%`,
-                      backgroundColor: index === 6 ? getCategoryColor(app.meta?.category || '') : '#374151'
-                    }]} />
-                    <Text style={styles.trendDay}>
-                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          {/* Current Month Amount Card */}
+          <View style={[
+            styles.monthCard,
+            getCurrentMonth() === 'Aug' && styles.augustCard
+          ]}>
+            <Text style={styles.monthTitle}>{getCurrentMonth()}</Text>
+            <Text style={styles.monthAmount}>${app.meta?.monthly || 0}</Text>
+            <Text style={styles.monthLabel}>Current Month</Text>
           </View>
 
-          {/* Detailed Usage Analytics */}
-          <View style={styles.detailedAnalyticsContainer}>
-            <Text style={styles.sectionTitle}>Detailed Usage Analytics</Text>
-            
-            {/* Usage Patterns */}
-            <View style={styles.usagePatternContainer}>
-              <Text style={styles.subsectionTitle}>Usage Patterns</Text>
-              <View style={styles.patternGrid}>
-                <View style={styles.patternCard}>
-                  <Text style={styles.patternValue}>{Math.round(app.value * 0.8)}</Text>
-                  <Text style={styles.patternLabel}>Peak Hours</Text>
-                  <Text style={styles.patternTime}>9AM - 5PM</Text>
-                </View>
-                <View style={styles.patternCard}>
-                  <Text style={styles.patternValue}>{Math.round(app.value * 0.6)}</Text>
-                  <Text style={styles.patternLabel}>Off Hours</Text>
-                  <Text style={styles.patternTime}>6PM - 8AM</Text>
-                </View>
-                <View style={styles.patternCard}>
-                  <Text style={styles.patternValue}>{Math.round(app.value * 0.3)}</Text>
-                  <Text style={styles.patternLabel}>Weekend</Text>
-                  <Text style={styles.patternTime}>Sat - Sun</Text>
-                </View>
-                <View style={styles.patternCard}>
-                  <Text style={styles.patternValue}>{Math.round(app.value * 1.1)}</Text>
-                  <Text style={styles.patternLabel}>Weekdays</Text>
-                  <Text style={styles.patternTime}>Mon - Fri</Text>
-                </View>
-              </View>
+          {/* Last Month Amount Card */}
+          <View style={styles.lastMonthContainer}>
+            <View style={[
+              styles.monthCard,
+              getLastMonth() === 'Jul' && styles.julyCard
+            ]}>
+              <Text style={styles.monthTitle}>{getLastMonth()}</Text>
+              <Text style={styles.monthAmount}>${Math.round((app.meta?.monthly || 0) * 0.9)}</Text>
+              <Text style={styles.monthLabel}>Last Month</Text>
             </View>
-
-            {/* Feature Usage */}
-            <View style={styles.featureUsageContainer}>
-              <Text style={styles.subsectionTitle}>Feature Utilization</Text>
-              <View style={styles.featureList}>
-                {[
-                  { name: 'Core Features', usage: 85, color: '#22c55e' },
-                  { name: 'Advanced Tools', usage: 62, color: '#3b82f6' },
-                  { name: 'Integrations', usage: 43, color: '#f59e0b' },
-                  { name: 'Admin Panel', usage: 28, color: '#8b5cf6' },
-                ].map((feature, index) => (
-                  <View key={index} style={styles.featureItem}>
-                    <View style={styles.featureInfo}>
-                      <Text style={styles.featureName}>{feature.name}</Text>
-                      <Text style={styles.featurePercentage}>{feature.usage}%</Text>
-                    </View>
-                    <View style={styles.featureProgressBar}>
-                      <View style={[styles.featureProgressFill, { 
-                        width: `${feature.usage}%`,
-                        backgroundColor: feature.color 
-                      }]} />
-                    </View>
-                  </View>
-                ))}
+            {getLastMonth() === 'Jul' && (
+              <View style={styles.addCard}>
+                <Text style={styles.plusSign}>+</Text>
               </View>
-            </View>
-
-            {/* Cost Analysis */}
-            <View style={styles.costAnalysisContainer}>
-              <Text style={styles.subsectionTitle}>Cost Analysis</Text>
-              <View style={styles.costGrid}>
-                <View style={styles.costCard}>
-                  <Text style={styles.costIcon}>💰</Text>
-                  <Text style={styles.costValue}>${app.meta?.monthly || 0}</Text>
-                  <Text style={styles.costLabel}>Current Monthly</Text>
-                </View>
-                <View style={styles.costCard}>
-                  <Text style={styles.costIcon}>📊</Text>
-                  <Text style={styles.costValue}>${Math.round((app.meta?.monthly || 0) * 12)}</Text>
-                  <Text style={styles.costLabel}>Annual Cost</Text>
-                </View>
-                <View style={styles.costCard}>
-                  <Text style={styles.costIcon}>💡</Text>
-                  <Text style={styles.costValue}>${Math.round((app.meta?.monthly || 0) * 0.85)}</Text>
-                  <Text style={styles.costLabel}>Optimized Est.</Text>
-                </View>
-                <View style={styles.costCard}>
-                  <Text style={styles.costIcon}>📈</Text>
-                  <Text style={[styles.costValue, { color: getChangeColor(app.change) }]}>
-                    ${Math.round((app.meta?.monthly || 0) * (parseFloat(app.change.replace(/[+%-]/g, '')) || 0) / 100)}
-                  </Text>
-                  <Text style={styles.costLabel}>Monthly Change</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Performance Metrics */}
-            <View style={styles.performanceContainer}>
-              <Text style={styles.subsectionTitle}>Performance Metrics</Text>
-              <View style={styles.performanceGrid}>
-                <View style={styles.performanceCard}>
-                  <View style={styles.performanceHeader}>
-                    <Text style={styles.performanceIcon}>⚡</Text>
-                    <Text style={styles.performanceTitle}>Response Time</Text>
-                  </View>
-                  <Text style={styles.performanceValue}>{Math.round(100 - app.value * 0.5)}ms</Text>
-                  <Text style={styles.performanceStatus}>Excellent</Text>
-                </View>
-                <View style={styles.performanceCard}>
-                  <View style={styles.performanceHeader}>
-                    <Text style={styles.performanceIcon}>🔍</Text>
-                    <Text style={styles.performanceTitle}>Uptime</Text>
-                  </View>
-                  <Text style={styles.performanceValue}>{(99.5 + app.value * 0.005).toFixed(2)}%</Text>
-                  <Text style={styles.performanceStatus}>Stable</Text>
-                </View>
-                <View style={styles.performanceCard}>
-                  <View style={styles.performanceHeader}>
-                    <Text style={styles.performanceIcon}>👥</Text>
-                    <Text style={styles.performanceTitle}>User Satisfaction</Text>
-                  </View>
-                  <Text style={styles.performanceValue}>{Math.round(80 + app.value * 0.2)}%</Text>
-                  <Text style={styles.performanceStatus}>High</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Subscription Details */}
-          <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>Subscription Details</Text>
-            
-            <View style={styles.detailsGrid}>
-              {app.meta?.owner && (
-                <View style={styles.detailCard}>
-                  <View style={styles.detailIconContainer}>
-                    <Text style={styles.detailIcon}>👤</Text>
-                  </View>
-                  <View style={styles.detailInfo}>
-                    <Text style={styles.detailLabel}>Owner</Text>
-                    <Text style={styles.detailValue}>{app.meta.owner}</Text>
-                  </View>
-                </View>
-              )}
-              
-              <View style={styles.detailCard}>
-                <View style={styles.detailIconContainer}>
-                  <Text style={styles.detailIcon}>🏷️</Text>
-                </View>
-                <View style={styles.detailInfo}>
-                  <Text style={styles.detailLabel}>Category</Text>
-                  <Text style={styles.detailValue}>{app.meta?.category || 'Uncategorized'}</Text>
-                </View>
-              </View>
-              
-              {app.meta?.monthly && app.meta?.seats && (
-                <View style={styles.detailCard}>
-                  <View style={styles.detailIconContainer}>
-                    <Text style={styles.detailIcon}>💰</Text>
-                  </View>
-                  <View style={styles.detailInfo}>
-                    <Text style={styles.detailLabel}>Cost per Seat</Text>
-                    <Text style={styles.detailValue}>
-                      ${(app.meta.monthly / app.meta.seats).toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              
-              <View style={styles.detailCard}>
-                <View style={styles.detailIconContainer}>
-                  <Text style={styles.detailIcon}>📅</Text>
-                </View>
-                <View style={styles.detailInfo}>
-                  <Text style={styles.detailLabel}>Billing Cycle</Text>
-                  <Text style={styles.detailValue}>Monthly</Text>
-                </View>
-              </View>
-              
-              <View style={styles.detailCard}>
-                <View style={styles.detailIconContainer}>
-                  <Text style={styles.detailIcon}>🔄</Text>
-                </View>
-                <View style={styles.detailInfo}>
-                  <Text style={styles.detailLabel}>Next Renewal</Text>
-                  <Text style={styles.detailValue}>
-                    {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={styles.detailCard}>
-                <View style={styles.detailIconContainer}>
-                  <Text style={styles.detailIcon}>📈</Text>
-                </View>
-                <View style={styles.detailInfo}>
-                  <Text style={styles.detailLabel}>Growth Rate</Text>
-                  <Text style={[styles.detailValue, { color: getChangeColor(app.change) }]}>
-                    {app.change}
-                  </Text>
-                </View>
-              </View>
-            </View>
+            )}
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsContainer}>
-            <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
-              <Text style={styles.actionButtonIcon}>⚙️</Text>
-              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>Manage Subscription</Text>
+            <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={handleCancel}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.actionButton, styles.tertiaryButton]}>
-              <Text style={styles.actionButtonIcon}>📤</Text>
-              <Text style={[styles.actionButtonText, styles.tertiaryButtonText]}>Export Analytics</Text>
+            <TouchableOpacity style={[styles.actionButton, styles.payButton]} onPress={handlePay}>
+              <Text style={styles.payButtonText}>Pay</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -420,15 +191,18 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    alignItems: 'center', // Center content to accommodate 80% TreeMap
+    alignItems: 'center',
   },
   appHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 30,
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
+    backgroundColor: '#000000',
+    borderRadius: 0,
     padding: 20,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
   appIcon: {
     width: 60,
@@ -449,6 +223,12 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 24,
     fontWeight: '700',
+    color: '#f8fafc',
+    marginBottom: 4,
+  },
+  totalAmount: {
+    fontSize: 20,
+    fontWeight: '600',
     color: '#f8fafc',
     marginBottom: 8,
   },
@@ -484,350 +264,101 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#f8fafc',
   },
-  analyticsContainer: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#f8fafc',
-    marginBottom: 20,
-  },
-  primaryMetricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  primaryMetric: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
+  monthCard: {
+    backgroundColor: '#000000',
+    borderRadius: 0,
     padding: 20,
-    flex: 1,
-  },
-  primaryMetricLeft: {
-    marginRight: 6,
-  },
-  primaryMetricRight: {
-    marginLeft: 6,
-  },
-  primaryMetricValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  primaryMetricLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#374151',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  costPerSeat: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  analyticsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  analyticsCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    width: (screenWidth - 68) / 2,
-  },
-  analyticsCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  analyticsIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  analyticsValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#f8fafc',
-  },
-  analyticsLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 4,
-  },
-  analyticsSubtext: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  trendContainer: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 20,
-  },
-  trendTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#f8fafc',
-    marginBottom: 16,
-  },
-  trendChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 80,
-  },
-  trendBar: {
-    alignItems: 'center',
-    flex: 1,
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  trendBarFill: {
-    width: 24,
-    borderRadius: 12,
-    marginBottom: 8,
-    minHeight: 4,
-  },
-  trendDay: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  detailsContainer: {
-    marginBottom: 30,
-  },
-  detailsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  detailCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    width: (screenWidth - 68) / 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#374151',
+    marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
-  detailIcon: {
+  augustCard: {
+    borderRadius: 0,
+    height: 280,
+    width: 360,
+    marginBottom: 10,
+  },
+  julyCard: {
+    borderRadius: 0,
+    width: 220,
+    height: 220,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+  },
+  lastMonthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: -5,
+    alignSelf: 'flex-start',
+    marginLeft: -3,
+  },
+  addCard: {
+    width: 130,
+    height: 220,
+    backgroundColor: '#ffffff',
+    borderRadius: 0,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusSign: {
+    fontSize: 48,
+    color: '#000000',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  },
+  // decemberCard: {
+  //   width: '50%',
+  // },
+  monthTitle: {
     fontSize: 18,
-  },
-  detailInfo: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 16,
     fontWeight: '600',
     color: '#f8fafc',
+    marginBottom: 8,
+  },
+  monthAmount: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#f8fafc',
+    marginBottom: 4,
+  },
+  monthLabel: {
+    fontSize: 14,
+    color: '#94a3b8',
   },
   actionsContainer: {
+    flexDirection: 'row',
     gap: 12,
     paddingBottom: 20,
+    width: '100%',
   },
   actionButton: {
-    backgroundColor: '#6366f1',
+    flex: 1,
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
   },
-  actionButtonIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  secondaryButton: {
+  cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: '#374151',
   },
-  secondaryButtonText: {
-    color: '#f8fafc',
-  },
-  tertiaryButton: {
-    backgroundColor: '#1e293b',
-    borderWidth: 0,
-  },
-  tertiaryButtonText: {
-    color: '#94a3b8',
-  },
-  // Detailed Analytics Styles
-  detailedAnalyticsContainer: {
-    marginBottom: 30,
-  },
-  subsectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#f8fafc',
-    marginBottom: 16,
-  },
-  // Usage Patterns
-  usagePatternContainer: {
-    marginBottom: 24,
-  },
-  patternGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  patternCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    width: (screenWidth - 68) / 2,
-    alignItems: 'center',
-  },
-  patternValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  patternLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 2,
-  },
-  patternTime: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  // Feature Usage
-  featureUsageContainer: {
-    marginBottom: 24,
-  },
-  featureList: {
-    gap: 12,
-  },
-  featureItem: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-  },
-  featureInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  featureName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#f8fafc',
-  },
-  featurePercentage: {
+  cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#f8fafc',
   },
-  featureProgressBar: {
-    height: 6,
-    backgroundColor: '#374151',
-    borderRadius: 3,
-    overflow: 'hidden',
+  payButton: {
+    backgroundColor: '#6366f1',
   },
-  featureProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  // Cost Analysis
-  costAnalysisContainer: {
-    marginBottom: 24,
-  },
-  costGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  costCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    width: (screenWidth - 68) / 2,
-    alignItems: 'center',
-  },
-  costIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  costValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  costLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-  },
-  // Performance Metrics
-  performanceContainer: {
-    marginBottom: 24,
-  },
-  performanceGrid: {
-    gap: 12,
-  },
-  performanceCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-  },
-  performanceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  performanceIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  performanceTitle: {
+  payButtonText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#f8fafc',
-  },
-  performanceValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#f8fafc',
-    marginBottom: 4,
-  },
-  performanceStatus: {
-    fontSize: 14,
-    color: '#22c55e',
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
 

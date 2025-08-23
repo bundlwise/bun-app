@@ -1,0 +1,6 @@
+framework module Pods_bundlwise {
+  umbrella header "Pods-bundlwise-umbrella.h"
+
+  export *
+  module * { export * }
+}
