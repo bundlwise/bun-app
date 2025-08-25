@@ -11,6 +11,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { TreeMapItem } from '../components/TreeMap';
+import TreeMap from '../components/TreeMap';
 import Button from '../components/Button';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AppDetail'>;
@@ -19,6 +20,75 @@ const { width: screenWidth } = Dimensions.get('window');
 
 const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { app } = route.params;
+
+  // Get current month name
+  const getCurrentMonth = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentDate = new Date();
+    return months[currentDate.getMonth()];
+  };
+
+  // Get last month name
+  const getLastMonth = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentDate = new Date();
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    return months[lastMonth.getMonth()];
+  };
+
+  // Create TreeMap data for the 4 cards (Last Month, 3 Months, 6 Months, Add)
+  const fourCardsData: TreeMapItem[] = [
+    {
+      name: getLastMonth(),
+      value: Math.round((app.meta?.monthly || 0) * 0.9),
+      change: '+5.2%',
+      meta: { 
+        monthly: Math.round((app.meta?.monthly || 0) * 0.9),
+        category: 'Last Month',
+        showTitle: true,
+        showLabel: true,
+        label: 'Last Month',
+        paymentDate: 'Last Month' // This will show "Last Month" in bottom right
+      }
+    },
+    {
+      name: '3 Month',
+      value: app.meta?.threeMonths || 0,
+      change: '+12.5%',
+      meta: { 
+        monthly: app.meta?.threeMonths || 0,
+        category: '3 Months',
+        showTitle: false,
+        showLabel: true,
+        label: '3 Month'
+      }
+    },
+    {
+      name: '6 Month',
+      value: app.meta?.sixMonths || 0,
+      change: '+8.3%',
+      meta: { 
+        monthly: app.meta?.sixMonths || 0,
+        category: '6 Months',
+        showTitle: false,
+        showLabel: true,
+        label: '6 Month'
+      }
+    },
+    {
+      name: 'Add',
+      value: 0.1, // Very small value to ensure it appears last
+      change: '+0%',
+      color: '#ffffff',
+      meta: { 
+        monthly: 0,
+        category: 'Add',
+        isAddAction: true,
+        showTitle: false,
+        showLabel: false
+      }
+    }
+  ];
 
   const handleGoBack = React.useCallback(() => {
     navigation.goBack();
@@ -49,21 +119,6 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     // For demo purposes, let's assume total spent is monthly cost * 12 (annual)
     return monthlyCost * 12;
   }, [app.meta?.monthly]);
-
-  // Get current month name
-  const getCurrentMonth = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentDate = new Date();
-    return months[currentDate.getMonth()];
-  };
-
-  // Get last month name
-  const getLastMonth = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentDate = new Date();
-    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    return months[lastMonth.getMonth()];
-  };
 
   const handleCancel = () => {
     // Handle cancel action
@@ -126,27 +181,23 @@ const AppDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
 
-          {/* Last Month Amount Card */}
-          <View style={styles.lastMonthContainer}>
-            <View style={[
-              styles.monthCard,
-              getLastMonth() === 'Jul' && styles.julyCard
-            ]}>
-              <View style={styles.monthCardTopLeft}>
-                <Text style={styles.monthTitle}>{getLastMonth()}</Text>
-              </View>
-              <View style={styles.monthCardCenter}>
-                <Text style={styles.monthAmount}>${Math.round((app.meta?.monthly || 0) * 0.9)}</Text>
-              </View>
-              <View style={styles.monthCardBottomRight}>
-                <Text style={styles.monthLabel}>Last Month</Text>
-              </View>
-            </View>
-            {getLastMonth() === 'Jul' && (
-              <View style={styles.addCard}>
-                <Text style={styles.plusSign}>+</Text>
-              </View>
-            )}
+          {/* TreeMap for 4 Cards */}
+          <View style={styles.treeMapContainer}>
+            <TreeMap 
+              data={fourCardsData}
+              onSelect={(item) => {
+                if (item.meta?.isAddAction) {
+                  console.log('Add action triggered');
+                  // Handle add action
+                } else {
+                  console.log('Selected:', item.name);
+                  // Handle card selection
+                }
+              }}
+              height={300}
+              hideFilterRow={true}
+              transparentBackground={true}
+            />
           </View>
 
           {/* Action Buttons */}
@@ -301,8 +352,8 @@ const styles = StyleSheet.create({
   },
   monthCardTopLeft: {
     position: 'absolute',
-    top: 20,
-    left: 20,
+    top: 10,
+    left: 10,
   },
   monthCardCenter: {
     alignItems: 'center',
@@ -311,21 +362,22 @@ const styles = StyleSheet.create({
   },
   monthCardBottomRight: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 10,
+    right: 10,
   },
   augustCard: {
     borderRadius: 0,
-    height: 280,
-    width: 360,
-    marginBottom: 10,
+    height: 260,
+    width: 370,
+    marginBottom: 0,
+    marginTop: -20, // 👈 ye bhi chalega (upar shift hoga)
   },
+  
   julyCard: {
     borderRadius: 0,
-    width: 220,
-    height: 220,
-    alignSelf: 'flex-start',
-    marginLeft: 10,
+    width: '48%',
+    height: 150,
+    marginLeft: 7,
   },
   lastMonthContainer: {
     flexDirection: 'row',
@@ -335,14 +387,50 @@ const styles = StyleSheet.create({
     marginLeft: -3,
   },
   addCard: {
-    width: 130,
-    height: 220,
+    width: '46%',
+    height: 120,
     backgroundColor: '#ffffff',
     borderRadius: 0,
-    alignSelf: 'flex-start',
-    marginLeft: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    top: -10,
+    left: -6,
+  },
+  fourCardsGrid: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  threeMonthsCard: {
+    backgroundColor: '#000000',
+    borderRadius: 0,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    position: 'relative',
+    width: '46%',
+    height: 180,
+    left:-6,
+  },
+  sixMonthsCard: {
+    backgroundColor: '#000000',
+    borderRadius: 0,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#ffffff',
+    position: 'relative',
+    width: '48%',
+    height: 150,
+    top: -40,
+    marginLeft: 7,
   },
   plusSign: {
     fontSize: 48,
@@ -355,7 +443,7 @@ const styles = StyleSheet.create({
   //   width: '50%',
   // },
   monthTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
     color: '#f8fafc',
     marginBottom: 8,
@@ -367,15 +455,42 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   monthLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#94a3b8',
   },
+  treeMapContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12, // match Home screen horizontal padding
+    marginTop: -6,   // bring closer, avoid overlap
+    marginBottom: 0,
+    backgroundColor: 'transparent', // make sure not covering
+  },
+  treeMapBox: {
+    width: '48%',   // 2 column layout
+    height: 100,
+    marginBottom: 10,
+    backgroundColor: '#000',  // ya jo bhi color
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  
+  
+  
   actionsContainer: {
     flexDirection: 'row',
     gap: 12,
     paddingBottom: 20,
     width: '100%',
+    marginTop: -110,   // 👈 isse buttons aur upar shift ho jayenge
+    marginBottom: 0,  // neeche ke safe area se bachane ke liye
   },
+  
   actionButton: {
     flex: 1,
     borderRadius: 16,

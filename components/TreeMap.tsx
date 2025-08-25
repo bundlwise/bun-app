@@ -19,6 +19,8 @@ interface TreeMapProps {
   onSelect?: (item: TreeMapItem) => void;
   selectedName?: string | null;
   dark?: boolean;
+  hideFilterRow?: boolean;
+  transparentBackground?: boolean;
 }
 
 // Deterministic squarified treemap layout (simple variant)
@@ -105,7 +107,9 @@ const TreeMap: React.FC<TreeMapProps> = ({
   height = screenHeight * 1.0, // Use 100% of screen height
   onSelect,
   selectedName,
-  dark = true
+  dark = true,
+  hideFilterRow = false,
+  transparentBackground = false
 }) => {
   // State for filtering
   const [selectedFilter, setSelectedFilter] = React.useState<'all' | 'categories' | 'monthly' | 'quarterly'>('all');
@@ -227,7 +231,14 @@ const TreeMap: React.FC<TreeMapProps> = ({
   }
   
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      transparentBackground && {
+        backgroundColor: 'transparent',
+        borderRadius: 0,
+        padding: 0,
+      }
+    ]}>
       <Svg width={width} height={height}>
         {layouts.map(layout => {
           const { x, y, width: rectWidth, height: rectHeight, item } = layout;
@@ -370,22 +381,32 @@ const TreeMap: React.FC<TreeMapProps> = ({
                           {monthlyVal !== undefined ? monthlyVal : '0'}
                         </SvgText>
                         
-                        {/* Payment date in bottom right - only show if enough space and date exists */}
-                        {item.meta?.paymentDate && rectWidth > 80 && rectHeight > 60 && (
-                          <SvgText
-                            x={x + rectWidth - 8}
-                            y={y + rectHeight - 8}
-                            fontSize={Math.max(8, Math.min(12, rectWidth * 0.08))}
-                            fontWeight="500"
-                            fill="rgba(255,255,255,0.8)"
-                            textAnchor="end"
-                          >
-                            {new Date(item.meta.paymentDate).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
-                          </SvgText>
-                        )}
+                        {/* Payment date or custom label in bottom right - allow smaller threshold for 'Last Month' */}
+                        {item.meta?.paymentDate && (() => {
+                          const isLastMonth = item.meta.paymentDate === 'Last Month';
+                          const minW = isLastMonth ? 40 : 80;
+                          const minH = isLastMonth ? 30 : 60;
+                          if (rectWidth <= minW || rectHeight <= minH) return null;
+                          const dynamicFontSize = Math.max(isLastMonth ? 7 : 8, Math.min(12, rectWidth * 0.08));
+                          const label = isLastMonth
+                            ? 'Last Month'
+                            : new Date(item.meta.paymentDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              });
+                          return (
+                            <SvgText
+                              x={x + rectWidth - 8}
+                              y={y + rectHeight - 8}
+                              fontSize={dynamicFontSize}
+                              fontWeight="500"
+                              fill="rgba(255,255,255,0.8)"
+                              textAnchor="end"
+                            >
+                              {label}
+                            </SvgText>
+                          );
+                        })()}
                       </>
                     );
                   })()}
@@ -396,26 +417,31 @@ const TreeMap: React.FC<TreeMapProps> = ({
         })}
       </Svg>
       
-      {/* Separator line below TreeMap */}
-      <View style={styles.separator} />
-      
-      {/* 4 Horizontal subscription boxes */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.horizontalBoxesContainer}>
-          <View style={styles.horizontalBox}>
-            <Text style={styles.boxTitle}>All</Text>
-          </View>
-          <View style={styles.horizontalBox}>
-            <Text style={styles.boxTitle}>Categories</Text>
-          </View>
-          <View style={styles.horizontalBox}>
-            <Text style={styles.boxTitle}>Monthly</Text>
-          </View>
-          <View style={styles.horizontalBox}>
-            <Text style={styles.boxTitle}>Quarterly</Text>
-          </View>
-        </View>
-      </ScrollView>
+      {/* Filter row - only show if not hidden */}
+      {!hideFilterRow && (
+        <>
+          {/* Separator line below TreeMap */}
+          <View style={styles.separator} />
+          
+          {/* 4 Horizontal subscription boxes */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.horizontalBoxesContainer}>
+              <View style={styles.horizontalBox}>
+                <Text style={styles.boxTitle}>All</Text>
+              </View>
+              <View style={styles.horizontalBox}>
+                <Text style={styles.boxTitle}>Categories</Text>
+              </View>
+              <View style={styles.horizontalBox}>
+                <Text style={styles.boxTitle}>Monthly</Text>
+              </View>
+              <View style={styles.horizontalBox}>
+                <Text style={styles.boxTitle}>Quarterly</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 };
@@ -430,9 +456,9 @@ const styles = StyleSheet.create({
     width: '100%', // Use full 100% of parent width
     height: '100%', // Use full 100% of parent height
     alignSelf: 'center', // Center the container
-    backgroundColor: '#000000', // Black background
+    backgroundColor: '#000000', // Default background
     borderRadius: 8,
-    padding: 16, // Increased padding for better spacing
+    padding: 16, // Default padding
     minHeight: 400, // Ensure minimum height for proper display
   },
   separator: {

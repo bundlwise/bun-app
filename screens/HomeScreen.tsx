@@ -8,16 +8,16 @@ import TreeMap, { TreeMapItem } from '../components/TreeMap';
 const { height: screenHeight } = Dimensions.get('window');
 
 const data: TreeMapItem[] = [
-  { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, category: 'Design', owner: 'Design Team', seats: 25, paymentDate: '2024-01-15' } },
-  { name: 'Sketch', value: 28, change: '-4.5%', meta: { monthly: 20, category: 'Design', seats: 12 } },
-  { name: 'Slack', value: 55, change: '+3.4%', meta: { monthly: 240, category: 'Collaboration', seats: 120, paymentDate: '2024-01-25' } },
-  { name: 'Jira', value: 30, change: '-2.1%', meta: { monthly: 210, category: 'PM', seats: 150, paymentDate: '2024-01-18' } },
-  { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, category: 'Monitoring', seats: 8, paymentDate: '2024-01-30' } },
-  { name: 'Netflix', value: 25, change: '+0%', meta: { monthly: 15.99, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-28' } },
-  { name: 'Prime', value: 18, change: '+0%', meta: { monthly: 12.99, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-29' } },
-  { name: 'Swiggy', value: 22, change: '+5.2%', meta: { monthly: 15, category: 'Food', owner: 'Food Team', seats: 50, paymentDate: '2024-01-26' } },
-  { name: 'Zomato', value: 20, change: '+3.1%', meta: { monthly: 12, category: 'Food', owner: 'Food Team', seats: 45, paymentDate: '2024-01-27' } },
-  { name: 'Uber Eats', value: 19, change: '+2.8%', meta: { monthly: 18, category: 'Food', owner: 'Food Team', seats: 40, paymentDate: '2024-01-24' } },
+  { name: 'Figma', value: 42, change: '+8.2%', meta: { monthly: 30, threeMonths: 85, sixMonths: 165, category: 'Design', owner: 'Design Team', seats: 25, paymentDate: '2024-01-15' } },
+  { name: 'Sketch', value: 28, change: '-4.5%', meta: { monthly: 20, threeMonths: 58, sixMonths: 112, category: 'Design', seats: 12 } },
+  { name: 'Slack', value: 55, change: '+3.4%', meta: { monthly: 240, threeMonths: 720, sixMonths: 1440, category: 'Collaboration', seats: 120, paymentDate: '2024-01-25' } },
+  { name: 'Jira', value: 30, change: '-2.1%', meta: { monthly: 210, threeMonths: 630, sixMonths: 1260, category: 'PM', seats: 150, paymentDate: '2024-01-18' } },
+  { name: 'Datadog', value: 14, change: '-3.6%', meta: { monthly: 320, threeMonths: 960, sixMonths: 1920, category: 'Monitoring', seats: 8, paymentDate: '2024-01-30' } },
+  { name: 'Netflix', value: 25, change: '+0%', meta: { monthly: 15.99, threeMonths: 48, sixMonths: 96, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-28' } },
+  { name: 'Prime', value: 18, change: '+0%', meta: { monthly: 12.99, threeMonths: 39, sixMonths: 78, category: 'Entertainment', owner: 'Personal', seats: 1, paymentDate: '2024-01-29' } },
+  { name: 'Swiggy', value: 22, change: '+5.2%', meta: { monthly: 15, threeMonths: 45, sixMonths: 90, category: 'Food', owner: 'Food Team', seats: 50, paymentDate: '2024-01-26' } },
+  { name: 'Zomato', value: 20, change: '+3.1%', meta: { monthly: 12, threeMonths: 36, sixMonths: 72, category: 'Food', owner: 'Food Team', seats: 45, paymentDate: '2024-01-27' } },
+  { name: 'Uber Eats', value: 19, change: '+2.8%', meta: { monthly: 18, threeMonths: 54, sixMonths: 108, category: 'Food', owner: 'Food Team', seats: 40, paymentDate: '2024-01-24' } },
 ];
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
